@@ -1,0 +1,8 @@
+# Desktop Services Store files (useless on systems other than Mac)
+.DS_Store
+
+# Go build files and temporary files
+/tmp/
+
+# Air configuration file (https://github.com/air-verse/air)
+.air.toml
