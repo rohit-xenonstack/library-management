@@ -1,4 +1,4 @@
-package models
+package model
 
 type BookInventory struct {
 	ISBN            string `gorm:"primaryKey"`

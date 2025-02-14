@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS BookInventory (
+  ISBN VARCHAR(17) NOT NULL,
+  LibID INT,
+  Title VARCHAR,
+  Authors VARCHAR,
+  Publisher VARCHAR,
+  Version VARCHAR,
+  TotalCopies INT DEFAULT 1,
+  AvailableCopies INT DEFAULT 1,
+  PRIMARY KEY (ISBN),
+  FORIEGN KEY (LibID) REFERENCES Library (ID)
+);

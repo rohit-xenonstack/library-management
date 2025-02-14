@@ -1,9 +1,10 @@
-package models
+package model
 
 import (
 	"database/sql"
 	"time"
 )
+
 type RequestEvents struct {
 	ReqID        string `gorm:"primaryKey"`
 	BookID       string

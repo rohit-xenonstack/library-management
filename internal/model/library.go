@@ -1,4 +1,4 @@
-package models
+package model
 
 type Library struct {
 	ID   string `gorm:"primaryKey"`
