@@ -6,3 +6,6 @@
 
 # Air configuration file (https://github.com/air-verse/air)
 # .air.toml
+
+# Environment variables and secrets
+.env
