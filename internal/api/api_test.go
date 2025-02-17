@@ -3,12 +3,12 @@ package api
 import (
 	"encoding/json"
 	"library-management/backend/internal/config"
-	"library-management/backend/internal/database"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 )
 
 type Response struct {
@@ -20,7 +20,9 @@ var cfg = &config.Config{
 	Server: config.ServerConfig{Port: "8081"},
 	DB:     config.DbConfig{DSN: "host=localhost user=postgres password=postgres dbname=library port=5433 sslmode=disable"},
 }
-var db, _ = database.Connect(cfg)
+var db *gorm.DB
+
+// var db, _ = database.Connect(cfg.DB.DSN)
 
 // func LoadTestCreds() {
 // 	sampleEnv = &config.Config{

@@ -24,6 +24,18 @@ func NewAPI(cfg *config.Config, db *gorm.DB) *API {
 	if cfg.Env == "prod" {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
+	API := &API{
+		Config:   cfg,
+		Database: db,
+	}
+
+	API.SetupRouter()
+
+	return API
+}
+
+func (api *API) SetupRouter() {
 	router := gin.Default()
 
 	router.GET("/ping", func(ctx *gin.Context) {
@@ -31,12 +43,8 @@ func NewAPI(cfg *config.Config, db *gorm.DB) *API {
 			"message": "pong",
 		})
 	})
-
-	return &API{
-		Router:   router,
-		Config:   cfg,
-		Database: db,
-	}
+	// Add all routes here
+	api.Router = router
 }
 
 func (api *API) Run() error {
@@ -44,33 +52,26 @@ func (api *API) Run() error {
 		Addr:    api.Config.Server.Port,
 		Handler: api.Router.Handler(),
 	}
-	// Graceful shutdown and restart taken from Gin documentation
+
 	go func() {
+		log.Print("Starting Server in 5 seconds...")
+		time.Sleep(5 * time.Second)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen: %s\n", err)
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shutdown the server with
-	// a timeout of 5 seconds.
 	quit := make(chan os.Signal, 1)
-	// kill (no param) default send syscall.SIGTERM
-	// kill -2 is syscall.SIGINT
-	// kill -9 is syscall. SIGKILL but can"t be catch, so don't need add it
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Println("Shutdown Server ...")
+	log.Print("Shutting down Server in 5 seconds...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server Shutdown:", err)
+		log.Fatal("Server Shutdown: ", err)
 	}
-	// catching ctx.Done(). timeout of 5 seconds.
-	select {
-	case <-ctx.Done():
-		log.Println("timeout of 5 seconds.")
-	}
-	log.Println("Server exiting")
+
+	<-ctx.Done()
 	return nil
 }
