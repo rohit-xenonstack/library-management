@@ -33,7 +33,11 @@ func Start() {
 		log.Fatal("Failed to migrate DB")
 	}
 
-	api := api.NewAPI(cfg, db)
+	api, err := api.NewAPI(cfg, db)
+	if err != nil {
+		log.Fatal("Error creating api service")
+	}
+
 	err = api.Run()
 	if err != nil {
 		log.Fatal("Failed to start the server")

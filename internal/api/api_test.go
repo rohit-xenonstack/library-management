@@ -15,26 +15,13 @@ type Response struct {
 	Message string `json:"message"`
 }
 
-var cfg = &config.Config{
-	Env:    "prod",
-	Server: config.ServerConfig{Port: "8081"},
-	DB:     config.DbConfig{DSN: "host=localhost user=postgres password=postgres dbname=library port=5433 sslmode=disable"},
-}
-var db *gorm.DB
-
-// var db, _ = database.Connect(cfg.DB.DSN)
-
-// func LoadTestCreds() {
-// 	sampleEnv = &config.Config{
-// 		Env:    "prod",
-// 		Server: config.ServerConfig{Port: "8081"},
-// 		DB:     config.DbConfig{DSN: "host=localhost user=postgres password=postgres dbname=library port=5433 sslmode=disable"},
-// 	}
-// 	db, _ = database.Connect(sampleEnv)
-// }
-
 func TestNewApi(t *testing.T) {
-	api := NewAPI(cfg, db)
+	var cfg = &config.SampleEnv
+	var db *gorm.DB
+
+	api, err := NewAPI(cfg, db)
+	assert.NoError(t, err)
+
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
 	api.Router.ServeHTTP(w, req)

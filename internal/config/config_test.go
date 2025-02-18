@@ -8,17 +8,19 @@ import (
 )
 
 func TestParseFlag(t *testing.T) {
-	sampleEnv := Config{
-		Env:    "prod",
-		Server: ServerConfig{Port: ":8081"},
-		DB:     DbConfig{DSN: "host=localhost user=postgres password=postgres dbname=library port=5433 sslmode=disable"},
-	}
+	sampleEnv := SampleEnv
 
 	err := os.Setenv("PORT", sampleEnv.Server.Port)
 	assert.NoError(t, err)
-	err = os.Setenv("ENV", sampleEnv.Env)
+	err = os.Setenv("ENVIRONMENT", sampleEnv.Env)
 	assert.NoError(t, err)
-	err = os.Setenv("DSN", sampleEnv.DB.DSN)
+	err = os.Setenv("DATA_SOURCE_NAME", sampleEnv.DB.DSN)
+	assert.NoError(t, err)
+	err = os.Setenv("JWT_SECRET_KEY", sampleEnv.JWT.SecretKey)
+	assert.NoError(t, err)
+	err = os.Setenv("ACCESS_TOKEN_DURATION", sampleEnv.JWT.AccessTokenDuration.String())
+	assert.NoError(t, err)
+	err = os.Setenv("REFRESH_TOKEN_DURATION", sampleEnv.JWT.RefreshTokenDuration.String())
 	assert.NoError(t, err)
 
 	cfg := *NewConfig()
@@ -28,4 +30,7 @@ func TestParseFlag(t *testing.T) {
 	assert.Equal(t, sampleEnv.Server.Port, cfg.Server.Port)
 	assert.Equal(t, sampleEnv.Env, cfg.Env)
 	assert.Equal(t, sampleEnv.DB.DSN, cfg.DB.DSN)
+	assert.Equal(t, sampleEnv.JWT.SecretKey, cfg.JWT.SecretKey)
+	assert.Equal(t, sampleEnv.JWT.AccessTokenDuration, cfg.JWT.AccessTokenDuration)
+	assert.Equal(t, sampleEnv.JWT.RefreshTokenDuration, cfg.JWT.RefreshTokenDuration)
 }

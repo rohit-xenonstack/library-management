@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"library-management/backend/internal/config"
+	"library-management/backend/pkg/token"
 	"log"
 	"net/http"
 	"os"
@@ -17,22 +18,29 @@ import (
 type API struct {
 	Router   *gin.Engine
 	Config   *config.Config
+	Token    token.Token
 	Database *gorm.DB
 }
 
-func NewAPI(cfg *config.Config, db *gorm.DB) *API {
+func NewAPI(cfg *config.Config, db *gorm.DB) (*API, error) {
 	if cfg.Env == "prod" {
 		gin.SetMode(gin.ReleaseMode)
+	}
+
+	token, err := token.NewJWToken(cfg.JWT.SecretKey)
+	if err != nil {
+		return nil, err
 	}
 
 	API := &API{
 		Config:   cfg,
 		Database: db,
+		Token:    token,
 	}
 
 	API.SetupRouter()
 
-	return API
+	return API, nil
 }
 
 func (api *API) SetupRouter() {
