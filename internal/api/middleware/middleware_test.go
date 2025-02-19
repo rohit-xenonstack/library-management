@@ -1,11 +1,13 @@
-package middleware
+package middleware_test
 
 import (
 	"fmt"
 	"library-management/backend/internal/api"
 	"library-management/backend/internal/api/handler"
+	"library-management/backend/internal/api/middleware"
 	"library-management/backend/internal/config"
 	"library-management/backend/internal/util"
+	"library-management/backend/internal/util/token"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -13,31 +15,29 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
-
-var cfg = &config.SampleEnv
-var h *handler.Handler
 
 func addAuthorization(
 	t *testing.T,
 	request *http.Request,
 	authorizationType string,
-	username string,
+	userID uuid.UUID,
 	role string,
 	duration time.Duration,
 ) {
-	jwtoken, _ := util.NewJWTMaker(os.Getenv("JWT_SECRET_KEY"))
-	token, payload, err := jwtoken.CreateToken(username, role, duration)
+	jwtoken, _ := token.NewJWTMaker(os.Getenv("JWT_SECRET_KEY"))
+	token, payload, err := jwtoken.CreateToken(userID, role, duration)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, payload)
 
 	authorizationHeader := fmt.Sprintf("%s %s", authorizationType, token)
-	request.Header.Set(authorizationHeaderKey, authorizationHeader)
+	request.Header.Set(middleware.AuthorizationHeaderKey, authorizationHeader)
 }
 
 func TestAuthMiddleware(t *testing.T) {
-	email := util.RandomEmail()
+	userID := util.RandomUUID()
 	role := util.OwnerRole
 
 	testCases := []struct {
@@ -48,7 +48,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name: "OK",
 			setupAuth: func(t *testing.T, request *http.Request) {
-				addAuthorization(t, request, authorizationTypeBearer, email, role, time.Minute)
+				addAuthorization(t, request, middleware.AuthorizationTypeBearer, userID, role, time.Minute)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusOK, recorder.Code)
@@ -65,7 +65,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name: "UnsupportedAuthorization",
 			setupAuth: func(t *testing.T, request *http.Request) {
-				addAuthorization(t, request, "unsupported", email, role, time.Minute)
+				addAuthorization(t, request, "unsupported", userID, role, time.Minute)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusUnauthorized, recorder.Code)
@@ -74,7 +74,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name: "InvalidAuthorizationFormat",
 			setupAuth: func(t *testing.T, request *http.Request) {
-				addAuthorization(t, request, "", email, role, time.Minute)
+				addAuthorization(t, request, "", userID, role, time.Minute)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusUnauthorized, recorder.Code)
@@ -83,7 +83,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name: "ExpiredToken",
 			setupAuth: func(t *testing.T, request *http.Request) {
-				addAuthorization(t, request, authorizationTypeBearer, email, role, -time.Minute)
+				addAuthorization(t, request, middleware.AuthorizationTypeBearer, userID, role, -time.Minute)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusUnauthorized, recorder.Code)
@@ -91,16 +91,19 @@ func TestAuthMiddleware(t *testing.T) {
 		},
 	}
 
+	cfg := &config.SampleEnv
+	h := handler.NewHandler(nil, nil)
+
 	for i := range testCases {
 		tc := testCases[i]
 
 		t.Run(tc.name, func(t *testing.T) {
 			api := api.NewAPI(cfg, h)
 
-			authPath := "/auth"
+			authPath := "/auth/login"
 			api.Router.GET(
 				authPath,
-				authMiddleware(),
+				middleware.JWTAuth(),
 				func(ctx *gin.Context) {
 					ctx.JSON(http.StatusOK, gin.H{})
 				},

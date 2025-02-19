@@ -3,27 +3,29 @@ package model
 import (
 	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Library struct {
-	ID   string `gorm:"type:uuid;primaryKey"`
+	ID   uuid.UUID `gorm:"type:uuid;primaryKey"`
 	Name string
 }
 
 type Users struct {
-	ID            string `gorm:"type:uuid;primaryKey"`
+	ID            uuid.UUID `gorm:"type:uuid;primaryKey"`
 	Name          string
 	Email         string
 	ContactNumber string
 	Role          string
 	Library       *Library `gorm:"foreignKey:LibID"`
-	LibID         *string
+	LibID         *uuid.UUID
 }
 
 type BookInventory struct {
 	ISBN            string   `gorm:"type:varchar(17);primaryKey"`
 	Library         *Library `gorm:"foreignKey:LibID"`
-	LibID           *string
+	LibID           *uuid.UUID
 	Title           string
 	Authors         string
 	Publisher       string
@@ -33,30 +35,30 @@ type BookInventory struct {
 }
 
 type RequestEvents struct {
-	ReqID         string         `gorm:"type:uuid;primaryKey"`
+	ReqID         uuid.UUID      `gorm:"type:uuid;primaryKey"`
 	BookInventory *BookInventory `gorm:"foreignKey:BookID"`
 	BookID        string
 	Reader        *Users `gorm:"foreignKey:ReaderID"`
-	ReaderID      string
+	ReaderID      uuid.UUID
 	RequestDate   time.Time
 	ApprovalDate  sql.NullTime
 	Admin         *Users `gorm:"foreignKey:ApproverID"`
-	ApproverID    sql.NullString
+	ApproverID    *uuid.UUID
 	RequestType   string
 }
 
 type IssueRegistry struct {
-	IssueID            string         `gorm:"type:uuid;primaryKey"`
+	IssueID            uuid.UUID      `gorm:"type:uuid;primaryKey"`
 	BookInventory      *BookInventory `gorm:"foreignKey:ISBN"`
 	ISBN               string
 	Reader             *Users `gorm:"foreignKey:ReaderID"`
-	ReaderID           string
+	ReaderID           *uuid.UUID
 	AdminIssue         *Users `gorm:"foreignKey:IssueApproverID"`
-	IssueApproverID    string
+	IssueApproverID    *uuid.UUID
 	IssueStatus        string
 	IssueDate          time.Time
 	ExpectedReturnDate time.Time
 	ReturnDate         sql.NullTime
 	AdminReturn        *Users `gorm:"foreignKey:ReturnApproverID"`
-	ReturnApproverID   *string
+	ReturnApproverID   *uuid.UUID
 }

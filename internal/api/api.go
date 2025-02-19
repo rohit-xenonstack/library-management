@@ -3,7 +3,9 @@ package api
 import (
 	"context"
 	"library-management/backend/internal/api/handler"
+	"library-management/backend/internal/api/middleware"
 	"library-management/backend/internal/config"
+	"library-management/backend/internal/util"
 	"log"
 	"net/http"
 	"os"
@@ -44,8 +46,23 @@ func (api *API) SetupRouter() {
 	})
 
 	// Add all routes here
-	api.Router.POST("/login", api.Handler.AuthHandler.Login)
-	// api.Router.Use()
+	authRoutes := api.Router.Group("/auth")
+	{
+		authRoutes.POST("/login", api.Handler.AuthHandler.Login)
+	}
+
+	protectedRoutes := api.Router.Group("/")
+	protectedRoutes.Use(middleware.JWTAuth())
+	{
+		ownerRoutes := protectedRoutes.Group("/owner")
+		ownerRoutes.Use(middleware.RequirePrivilege(util.OwnerRole))
+		{
+			ownerRoutes.POST("/create-library", api.Handler.OwnerHandler.CreateLibrary)
+			ownerRoutes.POST("/create-new-owner", api.Handler.OwnerHandler.CreateOwner)
+			ownerRoutes.POST("/create-new-admin", api.Handler.OwnerHandler.CreateAdmin)
+		}
+	}
+	return
 }
 
 func (api *API) Run() error {

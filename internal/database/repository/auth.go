@@ -1,33 +1,45 @@
 package repository
 
 import (
+	"context"
 	"library-management/backend/internal/api/model"
+	"library-management/backend/internal/database/transaction"
+	"sync"
 
 	"gorm.io/gorm"
 )
 
 type AuthRepositoryInterface interface {
-	Login(string) (*model.Users, error)
+	Login(context.Context, string) (*model.Users, error)
 }
 
 type AuthRepository struct {
-	db *gorm.DB
+	DB        *gorm.DB
+	txManager *transaction.TxManager
+	mu        sync.RWMutex
 }
 
-func NewAuthRepository(db *gorm.DB) *AuthRepository {
+func NewAuthRepository(db *gorm.DB, txManager *transaction.TxManager) *AuthRepository {
 	return &AuthRepository{
-		db: db,
+		DB:        db,
+		txManager: txManager,
 	}
 }
 
-func (auth *AuthRepository) Login(email string) (*model.Users, error) {
-	result := auth.db.Where("email = ?", email).First(&model.Users{})
+func (auth *AuthRepository) Login(ctx context.Context, email string) (*model.Users, error) {
+	auth.mu.RLock()
+	defer auth.mu.RUnlock()
 
-	if result.Error != nil {
-		return nil, result.Error
+	var user model.Users
+	err := auth.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
+		return tx.Set("gorm:query_option", "FOR SHARE").
+			Where("email = ?", email).
+			First(&user).Error
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
-	var user *model.Users
-	result.Scan(&user)
-	return user, nil
+	return &user, nil
 }

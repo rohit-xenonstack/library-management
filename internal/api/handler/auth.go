@@ -2,9 +2,8 @@ package handler
 
 import (
 	"errors"
-	"fmt"
 	"library-management/backend/internal/database/repository"
-	"library-management/backend/internal/util"
+	"library-management/backend/internal/util/token"
 	"net/http"
 	"os"
 	"time"
@@ -17,11 +16,19 @@ type LoginRequest struct {
 	Email string `json:"email" binding:"required,email"`
 }
 
+// type LoginResponse struct {
+// 	AccessToken    string `json:"access_token" binding:"required"`
+// 	RefreshToken   string `json:"refresh_token" binding:"required"`
+// 	AccessPayload  util.Payload
+// 	RefreshPayload util.Payload
+// }
+
+type AccessToken struct {
+	AccessToken string `json:"access_token" binding:"required"`
+}
 type LoginResponse struct {
-	AccessToken    string `json:"access_token" binding:"required"`
-	RefreshToken   string `json:"refresh_token" binding:"required"`
-	AccessPayload  util.Payload
-	RefreshPayload util.Payload
+	Status  string      `json:"status" binding:"required"`
+	Payload AccessToken `json:"payload"`
 }
 
 type AuthHandler struct {
@@ -36,12 +43,13 @@ func NewAuthHandler(auth *repository.AuthRepository) *AuthHandler {
 
 func (auth *AuthHandler) Login(ctx *gin.Context) {
 	var loginRequest LoginRequest
+
 	if err := ctx.ShouldBindJSON(&loginRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid email"})
 		return
 	}
-	fmt.Print(ctx.GetRawData())
-	user, err := auth.AuthRepository.Login(loginRequest.Email)
+
+	user, err := auth.AuthRepository.Login(ctx, loginRequest.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "user not found with given email"})
@@ -51,7 +59,7 @@ func (auth *AuthHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	jwtoken, err := util.NewJWTMaker(os.Getenv("JWT_SECRET_KEY"))
+	jwtoken, err := token.NewJWTMaker(os.Getenv("JWT_SECRET_KEY"))
 
 	duration, err := time.ParseDuration(os.Getenv("ACCESS_TOKEN_DURATION"))
 	if err != nil {
@@ -59,29 +67,19 @@ func (auth *AuthHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	accessToken, accessPayload, err := jwtoken.CreateToken(user.Email, user.Role, duration)
+	accessToken, _, err := jwtoken.CreateToken(user.ID, user.Role, duration)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	duration, err = time.ParseDuration(os.Getenv("REFRESH_TOKEN_DURATION"))
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	response := LoginResponse{
+		Status: "success",
+		Payload: AccessToken{
+			AccessToken: accessToken,
+		},
 	}
 
-	refreshToken, refreshPayload, err := jwtoken.CreateToken(user.Email, user.Role, duration)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	res := LoginResponse{
-		AccessToken:    accessToken,
-		RefreshToken:   refreshToken,
-		AccessPayload:  *accessPayload,
-		RefreshPayload: *refreshPayload,
-	}
-	ctx.IndentedJSON(http.StatusCreated, res)
+	ctx.IndentedJSON(http.StatusOK, response)
 	return
 }

@@ -29,9 +29,9 @@ func RandomString(n int) string {
 }
 
 // RandomOwner generates a random owner name
-func RandomUUID() string {
+func RandomUUID() uuid.UUID {
 	userID, _ := uuid.NewRandom()
-	return userID.String()
+	return userID
 }
 
 // RandomEmail generates a random email

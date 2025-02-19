@@ -15,9 +15,9 @@ type Response struct {
 	Message string `json:"message"`
 }
 
-func TestNewApi(t *testing.T) {
-	var cfg = &config.SampleEnv
-	var h *handler.Handler
+func Test_NewApi(t *testing.T) {
+	cfg := &config.SampleEnv
+	h := handler.NewHandler(nil, nil)
 
 	api := NewAPI(cfg, h)
 

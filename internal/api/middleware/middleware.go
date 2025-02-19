@@ -3,7 +3,8 @@ package middleware
 import (
 	"errors"
 	"fmt"
-	"library-management/backend/internal/util"
+	"library-management/backend/internal/database/repository"
+	"library-management/backend/internal/util/token"
 	"net/http"
 	"os"
 	"strings"
@@ -12,42 +13,97 @@ import (
 )
 
 const (
-	authorizationHeaderKey  = "authorization"
-	authorizationTypeBearer = "bearer"
-	authorizationPayloadKey = "authorization_payload"
+	AuthorizationHeaderKey  = "Authorization"
+	AuthorizationTypeBasic  = "basic"
+	AuthorizationTypeBearer = "bearer"
+	AuthorizationPayloadKey = "session_payload"
 )
 
-func authMiddleware() gin.HandlerFunc {
-	token, _ := util.NewJWTMaker(os.Getenv("JWT_SECRET_KEY"))
+type AuthMiddleware struct {
+	AuthRepository *repository.AuthRepository
+}
+
+func NewAuthMiddleware(auth *repository.AuthRepository) *AuthMiddleware {
+	return &AuthMiddleware{
+		AuthRepository: auth,
+	}
+}
+
+type authHeader struct {
+	BasicToken string `header:"Authorization"`
+}
+
+func JWTAuth() gin.HandlerFunc {
+	tokenMaker, _ := token.NewJWTMaker(os.Getenv("JWT_SECRET_KEY"))
 	return func(ctx *gin.Context) {
-		authorizationHeader := ctx.GetHeader(authorizationHeaderKey)
+		authorizationHeader := ctx.GetHeader(AuthorizationHeaderKey)
 
 		if len(authorizationHeader) == 0 {
 			err := errors.New("authorization header is missing")
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"status":  "error",
+				"payload": err.Error(),
+			})
+			return
 		}
 
 		fields := strings.Fields(authorizationHeader)
 		if len(fields) < 2 {
 			err := errors.New("authorization header is invalid")
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"status":  "error",
+				"payload": err.Error(),
+			})
+			return
 		}
 
 		authorizationType := strings.ToLower(fields[0])
-		if authorizationType != authorizationTypeBearer {
+		if authorizationType != AuthorizationTypeBearer {
 			err := fmt.Errorf("unsupported authorization type %s", authorizationType)
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"status":  "error",
+				"payload": err.Error(),
+			})
 			return
 		}
 
 		accessToken := fields[1]
-		payload, err := token.VerifyToken(accessToken)
+		payload, err := tokenMaker.VerifyToken(accessToken)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"status":  "error",
+				"payload": err.Error(),
+			})
 			return
 		}
 
-		ctx.Set(authorizationPayloadKey, payload)
+		ctx.Set(AuthorizationPayloadKey, payload)
+		ctx.Next()
+	}
+}
+
+func RequirePrivilege(requiredRole string) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		payload, ok := ctx.Get(AuthorizationPayloadKey)
+		if !ok {
+			err := fmt.Errorf("Session not found in context")
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"status":  "error",
+				"payload": err.Error(),
+			})
+			return
+		}
+
+		contextPayload := payload.(*token.Payload)
+		if contextPayload.Role != requiredRole {
+			err := fmt.Errorf("Access denied. %s role required", requiredRole)
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"status":  "error",
+				"payload": err.Error(),
+			})
+			return
+		}
+
 		ctx.Next()
 	}
 }

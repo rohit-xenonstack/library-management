@@ -1,4 +1,4 @@
-package util
+package token
 
 import (
 	"errors"
@@ -14,32 +14,32 @@ var (
 )
 
 type Payload struct {
-	ID        uuid.UUID `json:"id"`
-	Email     string    `json:"email"`
-	Role      string    `json:"role"`
-	IssuedAt  time.Time `json:"issued_at"`
-	ExpiredAt time.Time `json:"expired_at"`
+	ID       uuid.UUID `json:"id"`
+	UserID   uuid.UUID `json:"user_id"`
+	Role     string    `json:"role"`
+	IssuedAt time.Time `json:"issued_at"`
+	Expires  time.Time `json:"expires"`
 }
 
-func NewPayload(email string, role string, duration time.Duration) (*Payload, error) {
+func NewPayload(userID uuid.UUID, role string, duration time.Duration) (*Payload, error) {
 	tokenID, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
 	}
 
 	payload := &Payload{
-		ID:        tokenID,
-		Email:     email,
-		Role:      role,
-		IssuedAt:  time.Now(),
-		ExpiredAt: time.Now().Add(duration),
+		ID:       tokenID,
+		UserID:   userID,
+		Role:     role,
+		IssuedAt: time.Now(),
+		Expires:  time.Now().Add(duration),
 	}
 
 	return payload, nil
 }
 
 func (payload *Payload) Valid() error {
-	if time.Now().After(payload.ExpiredAt) {
+	if time.Now().After(payload.Expires) {
 		return ErrExpiredToken
 	}
 	return nil
@@ -47,7 +47,7 @@ func (payload *Payload) Valid() error {
 
 func (payload *Payload) GetExpirationTime() (*jwt.NumericDate, error) {
 	return &jwt.NumericDate{
-		Time: payload.ExpiredAt,
+		Time: payload.Expires,
 	}, nil
 }
 
