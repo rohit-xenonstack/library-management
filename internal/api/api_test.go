@@ -2,13 +2,13 @@ package api
 
 import (
 	"encoding/json"
+	"library-management/backend/internal/api/handler"
 	"library-management/backend/internal/config"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gorm.io/gorm"
 )
 
 type Response struct {
@@ -17,10 +17,9 @@ type Response struct {
 
 func TestNewApi(t *testing.T) {
 	var cfg = &config.SampleEnv
-	var db *gorm.DB
+	var h *handler.Handler
 
-	api, err := NewAPI(cfg, db)
-	assert.NoError(t, err)
+	api := NewAPI(cfg, h)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)

@@ -1,4 +1,4 @@
-package token
+package util
 
 import (
 	"errors"
@@ -15,13 +15,13 @@ var (
 
 type Payload struct {
 	ID        uuid.UUID `json:"id"`
-	UserID    string    `json:"userID"`
+	Email     string    `json:"email"`
 	Role      string    `json:"role"`
 	IssuedAt  time.Time `json:"issued_at"`
 	ExpiredAt time.Time `json:"expired_at"`
 }
 
-func NewPayload(userID string, role string, duration time.Duration) (*Payload, error) {
+func NewPayload(email string, role string, duration time.Duration) (*Payload, error) {
 	tokenID, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func NewPayload(userID string, role string, duration time.Duration) (*Payload, e
 
 	payload := &Payload{
 		ID:        tokenID,
-		UserID:    userID,
+		Email:     email,
 		Role:      role,
 		IssuedAt:  time.Now(),
 		ExpiredAt: time.Now().Add(duration),

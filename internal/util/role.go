@@ -1,4 +1,4 @@
-package model
+package util
 
 const (
 	OwnerRole  = "owner"

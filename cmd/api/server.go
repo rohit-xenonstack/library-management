@@ -2,9 +2,9 @@ package server
 
 import (
 	"library-management/backend/internal/api"
+	"library-management/backend/internal/api/model"
 	"library-management/backend/internal/config"
 	"library-management/backend/internal/database"
-	"library-management/backend/internal/model"
 	"log"
 
 	"github.com/joho/godotenv"
@@ -13,7 +13,7 @@ import (
 func Start() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("error loading .env file")
 	}
 
 	cfg := config.NewConfig()
@@ -30,16 +30,17 @@ func Start() {
 
 	err = db.AutoMigrate(&model.Library{}, &model.Users{}, &model.IssueRegistry{}, &model.BookInventory{}, &model.RequestEvents{})
 	if err != nil {
-		log.Fatal("Failed to migrate DB")
+		log.Fatal("failed to migrate DB")
 	}
 
-	api, err := api.NewAPI(cfg, db)
+	h := cfg.InitHandler(cfg.InitRepository(db))
+	api := api.NewAPI(cfg, h)
 	if err != nil {
-		log.Fatal("Error creating api service")
+		log.Fatal("cannot create api server")
 	}
 
 	err = api.Run()
 	if err != nil {
-		log.Fatal("Failed to start the server")
+		log.Fatal("failed to start the server")
 	}
 }

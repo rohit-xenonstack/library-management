@@ -2,8 +2,8 @@ package api
 
 import (
 	"context"
+	"library-management/backend/internal/api/handler"
 	"library-management/backend/internal/config"
-	"library-management/backend/pkg/token"
 	"log"
 	"net/http"
 	"os"
@@ -12,47 +12,40 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type API struct {
-	Router   *gin.Engine
-	Config   *config.Config
-	Token    token.Token
-	Database *gorm.DB
+	Router  *gin.Engine
+	Config  *config.Config
+	Handler *handler.Handler
 }
 
-func NewAPI(cfg *config.Config, db *gorm.DB) (*API, error) {
+func NewAPI(cfg *config.Config, h *handler.Handler) *API {
 	if cfg.Env == "prod" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	token, err := token.NewJWToken(cfg.JWT.SecretKey)
-	if err != nil {
-		return nil, err
+	router := gin.Default()
+	api := &API{
+		Router:  router,
+		Config:  cfg,
+		Handler: h,
 	}
+	api.SetupRouter()
 
-	API := &API{
-		Config:   cfg,
-		Database: db,
-		Token:    token,
-	}
-
-	API.SetupRouter()
-
-	return API, nil
+	return api
 }
 
 func (api *API) SetupRouter() {
-	router := gin.Default()
-
-	router.GET("/ping", func(ctx *gin.Context) {
+	api.Router.GET("/ping", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
 			"message": "pong",
 		})
 	})
+
 	// Add all routes here
-	api.Router = router
+	api.Router.POST("/login", api.Handler.AuthHandler.Login)
+	// api.Router.Use()
 }
 
 func (api *API) Run() error {

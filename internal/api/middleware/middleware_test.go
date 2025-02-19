@@ -3,92 +3,90 @@ package middleware
 import (
 	"fmt"
 	"library-management/backend/internal/api"
+	"library-management/backend/internal/api/handler"
 	"library-management/backend/internal/config"
-	"library-management/backend/internal/model"
-	"library-management/backend/pkg/token"
-	"library-management/backend/pkg/util"
+	"library-management/backend/internal/util"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gorm.io/gorm"
 )
 
 var cfg = &config.SampleEnv
-var db *gorm.DB
+var h *handler.Handler
 
 func addAuthorization(
 	t *testing.T,
 	request *http.Request,
-	jwtoken token.Token,
 	authorizationType string,
 	username string,
 	role string,
 	duration time.Duration,
 ) {
+	jwtoken, _ := util.NewJWTMaker(os.Getenv("JWT_SECRET_KEY"))
 	token, payload, err := jwtoken.CreateToken(username, role, duration)
-	require.NoError(t, err)
-	require.NotEmpty(t, payload)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, payload)
 
 	authorizationHeader := fmt.Sprintf("%s %s", authorizationType, token)
 	request.Header.Set(authorizationHeaderKey, authorizationHeader)
 }
 
 func TestAuthMiddleware(t *testing.T) {
-	userID := util.RandomUserID()
-	role := model.OwnerRole
+	email := util.RandomEmail()
+	role := util.OwnerRole
 
 	testCases := []struct {
 		name          string
-		setupAuth     func(t *testing.T, request *http.Request, token token.Token)
+		setupAuth     func(t *testing.T, request *http.Request)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
-			setupAuth: func(t *testing.T, request *http.Request, token token.Token) {
-				addAuthorization(t, request, token, authorizationTypeBearer, userID, role, time.Minute)
+			setupAuth: func(t *testing.T, request *http.Request) {
+				addAuthorization(t, request, authorizationTypeBearer, email, role, time.Minute)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusOK, recorder.Code)
+				assert.Equal(t, http.StatusOK, recorder.Code)
 			},
 		},
 		{
 			name: "NoAuthorization",
-			setupAuth: func(t *testing.T, request *http.Request, token token.Token) {
+			setupAuth: func(t *testing.T, request *http.Request) {
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusUnauthorized, recorder.Code)
+				assert.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 		{
 			name: "UnsupportedAuthorization",
-			setupAuth: func(t *testing.T, request *http.Request, token token.Token) {
-				addAuthorization(t, request, token, "unsupported", userID, role, time.Minute)
+			setupAuth: func(t *testing.T, request *http.Request) {
+				addAuthorization(t, request, "unsupported", email, role, time.Minute)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusUnauthorized, recorder.Code)
+				assert.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 		{
 			name: "InvalidAuthorizationFormat",
-			setupAuth: func(t *testing.T, request *http.Request, token token.Token) {
-				addAuthorization(t, request, token, "", userID, role, time.Minute)
+			setupAuth: func(t *testing.T, request *http.Request) {
+				addAuthorization(t, request, "", email, role, time.Minute)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusUnauthorized, recorder.Code)
+				assert.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 		{
 			name: "ExpiredToken",
-			setupAuth: func(t *testing.T, request *http.Request, token token.Token) {
-				addAuthorization(t, request, token, authorizationTypeBearer, userID, role, -time.Minute)
+			setupAuth: func(t *testing.T, request *http.Request) {
+				addAuthorization(t, request, authorizationTypeBearer, email, role, -time.Minute)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusUnauthorized, recorder.Code)
+				assert.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 	}
@@ -97,13 +95,12 @@ func TestAuthMiddleware(t *testing.T) {
 		tc := testCases[i]
 
 		t.Run(tc.name, func(t *testing.T) {
-			api, err := api.NewAPI(cfg, db)
-			assert.NoError(t, err)
+			api := api.NewAPI(cfg, h)
 
 			authPath := "/auth"
 			api.Router.GET(
 				authPath,
-				authMiddleware(api.Token),
+				authMiddleware(),
 				func(ctx *gin.Context) {
 					ctx.JSON(http.StatusOK, gin.H{})
 				},
@@ -113,7 +110,7 @@ func TestAuthMiddleware(t *testing.T) {
 			request, err := http.NewRequest(http.MethodGet, authPath, nil)
 			assert.NoError(t, err)
 
-			tc.setupAuth(t, request, api.Token)
+			tc.setupAuth(t, request)
 			api.Router.ServeHTTP(recorder, request)
 			tc.checkResponse(t, recorder)
 		})

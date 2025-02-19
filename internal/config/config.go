@@ -2,8 +2,12 @@ package config
 
 import (
 	"flag"
+	"library-management/backend/internal/api/handler"
+	"library-management/backend/internal/database/repository"
 	"os"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Config struct {
@@ -44,4 +48,12 @@ func (cfg *Config) ParseFlag() error {
 	}
 	flag.DurationVar(&cfg.JWT.RefreshTokenDuration, "jwt-refresh-token-duration", duration, "Refresh Token Lifetime")
 	return nil
+}
+
+func (cfg *Config) InitHandler(r *repository.Repository) *handler.Handler {
+	return handler.NewHandler(r.AuthRepository, r.OwnerRepository)
+}
+
+func (cfg *Config) InitRepository(db *gorm.DB) *repository.Repository {
+	return repository.NewRepository(db)
 }

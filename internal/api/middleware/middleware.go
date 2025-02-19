@@ -3,8 +3,9 @@ package middleware
 import (
 	"errors"
 	"fmt"
-	"library-management/backend/pkg/token"
+	"library-management/backend/internal/util"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -16,7 +17,8 @@ const (
 	authorizationPayloadKey = "authorization_payload"
 )
 
-func authMiddleware(token token.Token) gin.HandlerFunc {
+func authMiddleware() gin.HandlerFunc {
+	token, _ := util.NewJWTMaker(os.Getenv("JWT_SECRET_KEY"))
 	return func(ctx *gin.Context) {
 		authorizationHeader := ctx.GetHeader(authorizationHeaderKey)
 

@@ -1,4 +1,4 @@
-package token
+package util
 
 import (
 	"errors"
@@ -10,39 +10,37 @@ import (
 
 const minSecretKeySize = 32
 
-// JWTMaker is a JSON Web Token maker
-type JWToken struct {
+type JWTMaker struct {
 	secretKey string
 }
 
-// NewJWTMaker creates a new JWTMaker
-func NewJWToken(secretKey string) (Token, error) {
+func NewJWTMaker(secretKey string) (*JWTMaker, error) {
 	if len(secretKey) < minSecretKeySize {
 		return nil, fmt.Errorf("invalid key size: must be at least %d characters", minSecretKeySize)
 	}
-	return &JWToken{secretKey}, nil
+	return &JWTMaker{secretKey}, nil
 }
 
 // CreateToken creates a new token for a specific username and duration
-func (jwtoken *JWToken) CreateToken(username string, role string, duration time.Duration) (string, *Payload, error) {
-	payload, err := NewPayload(username, role, duration)
+func (maker *JWTMaker) CreateToken(email string, role string, duration time.Duration) (string, *Payload, error) {
+	payload, err := NewPayload(email, role, duration)
 	if err != nil {
 		return "", payload, err
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
-	token, err := jwtToken.SignedString([]byte(jwtoken.secretKey))
+	token, err := jwtToken.SignedString([]byte(maker.secretKey))
 	return token, payload, err
 }
 
 // VerifyToken checks if the token is valid or not
-func (jwtoken *JWToken) VerifyToken(token string) (*Payload, error) {
+func (maker *JWTMaker) VerifyToken(token string) (*Payload, error) {
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
 			return nil, ErrInvalidToken
 		}
-		return []byte(jwtoken.secretKey), nil
+		return []byte(maker.secretKey), nil
 	}
 
 	jwtToken, err := jwt.ParseWithClaims(token, &Payload{}, keyFunc)
