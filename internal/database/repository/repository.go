@@ -9,6 +9,7 @@ import (
 type Repository struct {
 	AuthRepository  *AuthRepository
 	OwnerRepository *OwnerRepository
+	AdminRepository *AdminRepository
 	txManager       *transaction.TxManager
 }
 
@@ -17,6 +18,7 @@ func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{
 		AuthRepository:  NewAuthRepository(db, txManager),
 		OwnerRepository: NewOwnerRepository(db, txManager),
+		AdminRepository: NewAdminRepository(db, txManager),
 		txManager:       txManager,
 	}
 }

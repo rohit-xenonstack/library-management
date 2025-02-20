@@ -13,7 +13,7 @@ import (
 )
 
 type OwnerRepositoryInterface interface {
-	CreateLibrary(*context.Context, *model.Library, string) error
+	CreateLibrary(*context.Context, *model.Library, uuid.UUID) error
 	CreateUser(*context.Context, *model.Users) error
 	OnboardAdmin(*context.Context, *model.Users) error
 }

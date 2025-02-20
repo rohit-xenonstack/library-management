@@ -61,6 +61,11 @@ func (api *API) SetupRouter() {
 			ownerRoutes.POST("/create-new-owner", api.Handler.OwnerHandler.CreateOwner)
 			ownerRoutes.POST("/create-new-admin", api.Handler.OwnerHandler.CreateAdmin)
 		}
+		adminRoutes := protectedRoutes.Group("/admin")
+		adminRoutes.Use(middleware.RequirePrivilege(util.AdminRole))
+		{
+			adminRoutes.POST("/add-book", api.Handler.AdminHandler.AddBook)
+		}
 	}
 	return
 }

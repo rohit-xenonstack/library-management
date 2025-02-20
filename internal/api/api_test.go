@@ -17,7 +17,7 @@ type Response struct {
 
 func Test_NewApi(t *testing.T) {
 	cfg := &config.SampleEnv
-	h := handler.NewHandler(nil, nil)
+	h := handler.NewHandler(nil, nil, nil)
 
 	api := NewAPI(cfg, h)
 
