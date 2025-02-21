@@ -28,10 +28,14 @@ func Start() {
 		panic(err)
 	}
 
-	err = db.AutoMigrate(&model.Library{}, &model.Users{}, &model.IssueRegistry{}, &model.BookInventory{}, &model.RequestEvents{})
+	err = db.AutoMigrate(&model.Library{}, &model.Users{}, &model.BookInventory{}, &model.RequestEvents{}, &model.IssueRegistry{})
 	if err != nil {
 		log.Fatal("failed to migrate DB")
 	}
+	// err = db.AutoMigrate()
+	// if err != nil {
+	// 	log.Fatal("failed to migrate DB")
+	// }
 
 	h := cfg.InitHandler(cfg.InitRepository(db))
 	api := api.NewAPI(cfg, h)

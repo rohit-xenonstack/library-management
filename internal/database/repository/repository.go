@@ -7,18 +7,20 @@ import (
 )
 
 type Repository struct {
-	AuthRepository  *AuthRepository
-	OwnerRepository *OwnerRepository
-	AdminRepository *AdminRepository
-	txManager       *transaction.TxManager
+	AuthRepository   *AuthRepository
+	OwnerRepository  *OwnerRepository
+	AdminRepository  *AdminRepository
+	ReaderRepository *ReaderRepository
+	txManager        *transaction.TxManager
 }
 
 func NewRepository(db *gorm.DB) *Repository {
 	txManager := transaction.NewTxManager(db)
 	return &Repository{
-		AuthRepository:  NewAuthRepository(db, txManager),
-		OwnerRepository: NewOwnerRepository(db, txManager),
-		AdminRepository: NewAdminRepository(db, txManager),
-		txManager:       txManager,
+		AuthRepository:   NewAuthRepository(db, txManager),
+		OwnerRepository:  NewOwnerRepository(db, txManager),
+		AdminRepository:  NewAdminRepository(db, txManager),
+		ReaderRepository: NewReaderRepository(db, txManager),
+		txManager:        txManager,
 	}
 }

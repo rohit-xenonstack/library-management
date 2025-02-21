@@ -52,6 +52,9 @@ func (owner *OwnerRepository) CreateLibrary(ctx context.Context, library *model.
 			Where("name = ?", library.Name).
 			First(&existingLib)
 
+		if result.Error != nil {
+			return result.Error
+		}
 		if result.RowsAffected > 0 {
 			return errors.New("library with supplied email already exists")
 		}

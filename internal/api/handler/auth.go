@@ -2,33 +2,45 @@ package handler
 
 import (
 	"errors"
+	"fmt"
+	"library-management/backend/internal/api/middleware"
+	"library-management/backend/internal/api/model"
 	"library-management/backend/internal/database/repository"
+	"library-management/backend/internal/util"
 	"library-management/backend/internal/util/token"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type LoginRequest struct {
-	Email string `json:"email" binding:"required,email"`
+	Email string `json:"email" binding:"required"`
 }
 
-// type LoginResponse struct {
-// 	AccessToken    string `json:"access_token" binding:"required"`
-// 	RefreshToken   string `json:"refresh_token" binding:"required"`
-// 	AccessPayload  util.Payload
-// 	RefreshPayload util.Payload
-// }
+type UserSignupRequest struct {
+	Name    string    `json:"name" binding:"required"`
+	Email   string    `json:"email" binding:"required"`
+	Contact string    `json:"contact" binding:"required"`
+	LibID   uuid.UUID `json:"library_id" binding:"required"`
+}
 
-type AccessToken struct {
+type UserSignupResponse struct {
+	Status  string `json:"status" binding:"required"`
+	Payload string `json:"payload" binding:"required"`
+}
+
+type LoginPayload struct {
 	AccessToken string `json:"access_token" binding:"required"`
+	Role        string `json:"role" binding:"required"`
 }
+
 type LoginResponse struct {
-	Status  string      `json:"status" binding:"required"`
-	Payload AccessToken `json:"payload"`
+	Status  string       `json:"status" binding:"required"`
+	Payload LoginPayload `json:"payload" binding:"required"`
 }
 
 type AuthHandler struct {
@@ -75,11 +87,59 @@ func (auth *AuthHandler) Login(ctx *gin.Context) {
 
 	response := LoginResponse{
 		Status: "success",
-		Payload: AccessToken{
+		Payload: LoginPayload{
 			AccessToken: accessToken,
+			Role:        user.Role,
 		},
 	}
 
-	ctx.IndentedJSON(http.StatusOK, response)
+	ctx.JSON(http.StatusOK, response)
+	return
+}
+
+func (auth *AuthHandler) UserDetails(ctx *gin.Context) {
+	session, exists := ctx.Get(middleware.AuthorizationPayloadKey)
+	sessionPayload := session.(*token.Payload)
+	if !exists {
+		err := fmt.Errorf("Session not found in current context")
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	user, err := auth.AuthRepository.UserDetails(ctx, sessionPayload.UserID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, user)
+}
+
+func (auth *AuthHandler) UserSignup(ctx *gin.Context) {
+	var userSignupRequest UserSignupRequest
+
+	if err := ctx.ShouldBindJSON(&userSignupRequest); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request parameters"})
+		return
+	}
+
+	newUser := model.Users{
+		ID:            util.RandomUUID(),
+		Name:          userSignupRequest.Name,
+		Email:         userSignupRequest.Email,
+		ContactNumber: userSignupRequest.Contact,
+		Role:          util.ReaderRole,
+		LibID:         &userSignupRequest.LibID,
+	}
+
+	err := auth.AuthRepository.UserSignup(ctx, newUser)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response := UserSignupResponse{
+		Status:  "success",
+		Payload: "User Signup Successful",
+	}
+	ctx.JSON(http.StatusOK, response)
 	return
 }

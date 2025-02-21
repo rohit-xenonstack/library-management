@@ -51,7 +51,7 @@ func (cfg *Config) ParseFlag() error {
 }
 
 func (cfg *Config) InitHandler(r *repository.Repository) *handler.Handler {
-	return handler.NewHandler(r.AuthRepository, r.OwnerRepository, r.AdminRepository)
+	return handler.NewHandler(r.AuthRepository, r.OwnerRepository, r.AdminRepository, r.ReaderRepository)
 }
 
 func (cfg *Config) InitRepository(db *gorm.DB) *repository.Repository {

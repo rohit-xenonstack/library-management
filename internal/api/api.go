@@ -49,11 +49,13 @@ func (api *API) SetupRouter() {
 	authRoutes := api.Router.Group("/auth")
 	{
 		authRoutes.POST("/login", api.Handler.AuthHandler.Login)
+		authRoutes.POST("/signup", api.Handler.AuthHandler.UserSignup)
 	}
 
 	protectedRoutes := api.Router.Group("/")
 	protectedRoutes.Use(middleware.JWTAuth())
 	{
+		protectedRoutes.GET("/me", api.Handler.AuthHandler.UserDetails)
 		ownerRoutes := protectedRoutes.Group("/owner")
 		ownerRoutes.Use(middleware.RequirePrivilege(util.OwnerRole))
 		{
@@ -65,6 +67,17 @@ func (api *API) SetupRouter() {
 		adminRoutes.Use(middleware.RequirePrivilege(util.AdminRole))
 		{
 			adminRoutes.POST("/add-book", api.Handler.AdminHandler.AddBook)
+			adminRoutes.POST("/remove-book", api.Handler.AdminHandler.RemoveBook)
+			adminRoutes.PUT("/update-book", api.Handler.AdminHandler.UpdateBook)
+			adminRoutes.GET("/issue-requests", api.Handler.AdminHandler.ListIssueRequests)
+			adminRoutes.POST("/approve-issue-request", api.Handler.AdminHandler.ApproveIssueRequest)
+			adminRoutes.POST("/reject-issue-request", api.Handler.AdminHandler.RejectIssueRequest)
+		}
+		readerRoutes := protectedRoutes.Group("/reader")
+		readerRoutes.Use(middleware.RequirePrivilege(util.ReaderRole))
+		{
+			readerRoutes.GET("/books", api.Handler.ReaderHandler.SearchBook)
+			readerRoutes.POST("/raise-issue-request", api.Handler.ReaderHandler.RaiseIssueRequest)
 		}
 	}
 	return

@@ -5,15 +5,17 @@ import (
 )
 
 type Handler struct {
-	AuthHandler  *AuthHandler
-	OwnerHandler *OwnerHandler
-	AdminHandler *AdminHandler
+	AuthHandler   *AuthHandler
+	OwnerHandler  *OwnerHandler
+	AdminHandler  *AdminHandler
+	ReaderHandler *ReaderHandler
 }
 
-func NewHandler(auth *repository.AuthRepository, owner *repository.OwnerRepository, admin *repository.AdminRepository) *Handler {
+func NewHandler(auth *repository.AuthRepository, owner *repository.OwnerRepository, admin *repository.AdminRepository, reader *repository.ReaderRepository) *Handler {
 	return &Handler{
-		AuthHandler:  NewAuthHandler(auth),
-		OwnerHandler: NewOwnerHandler(owner),
-		AdminHandler: NewAdminHandler(admin),
+		AuthHandler:   NewAuthHandler(auth),
+		OwnerHandler:  NewOwnerHandler(owner),
+		AdminHandler:  NewAdminHandler(admin),
+		ReaderHandler: NewReaderHandler(reader),
 	}
 }
