@@ -163,6 +163,22 @@ func (admin *AdminRepository) ApproveIssueRequest(ctx context.Context, requestID
 			return err
 		}
 
+		var bookInventory model.BookInventory
+		if err := tx.Set("gorm:query_option", "FOR UPDATE").Where("isbn = ?", existingIssueRequest.BookID).First(&bookInventory).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("Invalid ISBN in issue request")
+			}
+			return err
+		}
+
+		if bookInventory.AvailableCopies < 1 {
+			return errors.New("No available copies in inventory")
+		}
+
+		if err := tx.Model(&model.BookInventory{}).Where("isbn = ?", bookInventory.ISBN).Update("available_copies", bookInventory.AvailableCopies-1).Error; err != nil {
+			return err
+		}
+
 		approvalDate := time.Now()
 		expectedReturnDate := approvalDate.Add(time.Hour * 24 * 7)
 		if err := tx.Model(&model.RequestEvents{}).Where("request_id = ?", requestID).Update("approver_id", approverID).Update("approval_date", approvalDate).Error; err != nil {

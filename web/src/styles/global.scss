@@ -1,0 +1,72 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  &::before {
+    box-sizing: border-box;
+  }
+  &::after {
+    box-sizing: border-box;
+  }
+}
+body {
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+img {
+  display: block;
+  max-width: 100%;
+}
+picture {
+  display: block;
+  max-width: 100%;
+}
+svg {
+  display: block;
+  max-width: 100%;
+}
+input {
+  font: inherit;
+}
+button {
+  font: inherit;
+}
+textarea {
+  font: inherit;
+}
+select {
+  font: inherit;
+}
+p {
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+h1 {
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+h2 {
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+h3 {
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+h4 {
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+h5 {
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+h6 {
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+#root {
+  isolation: isolate;
+}
+#__next {
+  isolation: isolate;
+}
