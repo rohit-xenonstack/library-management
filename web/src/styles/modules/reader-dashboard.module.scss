@@ -1,0 +1,193 @@
+@use '../variables.scss' as vars;
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.booksGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.bookCard {
+  background-color: vars.$color-white;
+  border: 1px solid vars.$color-gray-200;
+  border-radius: vars.$border-radius;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.02),
+    0 4px 8px rgba(0, 0, 0, 0.03);
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: vars.$color-gray-300;
+    box-shadow:
+      0 4px 8px rgba(0, 0, 0, 0.04),
+      0 8px 16px rgba(0, 0, 0, 0.06);
+  }
+}
+
+.bookInfo {
+  flex: 1;
+}
+
+.bookTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: vars.$color-gray-900;
+  margin-bottom: 1rem;
+}
+
+.bookDetails {
+  font-size: 0.875rem;
+  color: vars.$color-gray-600;
+  margin-bottom: 0.5rem;
+
+  span {
+    font-weight: 500;
+    color: vars.$color-gray-700;
+  }
+}
+
+.bookCopies {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: vars.$color-gray-900;
+  margin-top: 1rem;
+
+  span {
+    color: vars.$color-gray-600;
+  }
+}
+
+.bookActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: auto;
+  flex-direction: column;
+}
+
+.requestButton {
+  flex: 1;
+  padding: 0.75rem;
+  background-color: vars.$color-gray-900;
+  color: vars.$color-white;
+  border: none;
+  border-radius: vars.$border-radius;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background-color: vars.$color-gray-800;
+  }
+
+  &:disabled {
+    background-color: vars.$color-gray-400;
+    cursor: not-allowed;
+  }
+}
+
+.checkButton {
+  flex: 1;
+  padding: 0.75rem;
+  background-color: vars.$color-white;
+  color: vars.$color-gray-900;
+  border: 1px solid vars.$color-gray-300;
+  border-radius: vars.$border-radius;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background-color: vars.$color-gray-50;
+    border-color: vars.$color-gray-400;
+  }
+
+  &:disabled {
+    background-color: vars.$color-gray-50;
+    color: vars.$color-gray-400;
+    cursor: not-allowed;
+  }
+}
+
+.requestStatus {
+  padding: 0.75rem;
+  border-radius: vars.$border-radius;
+  font-size: 0.875rem;
+  text-align: center;
+
+  &.success {
+    background-color: vars.$color-green-50;
+    border: 1px solid vars.$color-green-200;
+    color: vars.$color-green-700;
+  }
+
+  &.error {
+    background-color: vars.$color-red-50;
+    border: 1px solid vars.$color-red-200;
+    color: vars.$color-red-700;
+  }
+}
+
+.error {
+  padding: 0.75rem;
+  background-color: vars.$color-red-50;
+  border: 1px solid vars.$color-red-200;
+  border-radius: vars.$border-radius;
+  color: vars.$color-red-700;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.noResults {
+  text-align: center;
+  padding: 2rem;
+  color: vars.$color-gray-600;
+  background-color: vars.$color-gray-50;
+  border-radius: vars.$border-radius;
+  margin-top: 2rem;
+}
+
+.availabilityInfo {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: vars.$color-gray-50;
+  border-radius: vars.$border-radius;
+  font-size: 0.875rem;
+  color: vars.$color-gray-900;
+
+  span {
+    font-weight: 500;
+    color: vars.$color-gray-700;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .booksGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .bookCard {
+    padding: 1rem;
+  }
+
+  .bookActions {
+    flex-direction: column;
+  }
+}

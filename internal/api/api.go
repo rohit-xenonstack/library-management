@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,6 +29,16 @@ func NewAPI(cfg *config.Config, h *handler.Handler) *API {
 	}
 
 	router := gin.Default()
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:4173"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Content-Length", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	api := &API{
 		Router:  router,
 		Config:  cfg,
@@ -39,48 +50,53 @@ func NewAPI(cfg *config.Config, h *handler.Handler) *API {
 }
 
 func (api *API) SetupRouter() {
-	api.Router.GET("/ping", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, gin.H{
-			"message": "pong",
+	baseRoute := api.Router.Group("/api")
+	{
+		baseRoute.GET("/ping", func(ctx *gin.Context) {
+			ctx.JSON(http.StatusOK, gin.H{"message": "pong"})
 		})
-	})
 
-	// Add all routes here
-	authRoutes := api.Router.Group("/auth")
-	{
-		authRoutes.POST("/login", api.Handler.AuthHandler.Login)
-		authRoutes.POST("/signup", api.Handler.AuthHandler.UserSignup)
-	}
+		authRoutes := baseRoute.Group("/auth")
+		{
+			authRoutes.POST("/login", api.Handler.AuthHandler.Login)
+			authRoutes.POST("/register", api.Handler.AuthHandler.UserSignup)
+			authRoutes.POST("/refresh", api.Handler.AuthHandler.RefreshToken)
+		}
 
-	protectedRoutes := api.Router.Group("/")
-	protectedRoutes.Use(middleware.JWTAuth())
-	{
-		protectedRoutes.GET("/me", api.Handler.AuthHandler.UserDetails)
-		ownerRoutes := protectedRoutes.Group("/owner")
-		ownerRoutes.Use(middleware.RequirePrivilege(util.OwnerRole))
+		protectedRoutes := baseRoute.Group("/protected")
+		protectedRoutes.Use(middleware.JWTAuth())
 		{
-			ownerRoutes.POST("/create-library", api.Handler.OwnerHandler.CreateLibrary)
-			ownerRoutes.POST("/create-new-owner", api.Handler.OwnerHandler.CreateOwner)
-			ownerRoutes.POST("/create-new-admin", api.Handler.OwnerHandler.CreateAdmin)
-		}
-		adminRoutes := protectedRoutes.Group("/admin")
-		adminRoutes.Use(middleware.RequirePrivilege(util.AdminRole))
-		{
-			adminRoutes.POST("/add-book", api.Handler.AdminHandler.AddBook)
-			adminRoutes.POST("/remove-book", api.Handler.AdminHandler.RemoveBook)
-			adminRoutes.PUT("/update-book", api.Handler.AdminHandler.UpdateBook)
-			adminRoutes.GET("/issue-requests", api.Handler.AdminHandler.ListIssueRequests)
-			adminRoutes.POST("/approve-issue-request", api.Handler.AdminHandler.ApproveIssueRequest)
-			adminRoutes.POST("/reject-issue-request", api.Handler.AdminHandler.RejectIssueRequest)
-		}
-		readerRoutes := protectedRoutes.Group("/reader")
-		readerRoutes.Use(middleware.RequirePrivilege(util.ReaderRole))
-		{
-			readerRoutes.GET("/books", api.Handler.ReaderHandler.SearchBook)
-			readerRoutes.POST("/raise-issue-request", api.Handler.ReaderHandler.RaiseIssueRequest)
+			protectedRoutes.GET("/me", api.Handler.AuthHandler.UserDetails)
+			ownerRoutes := protectedRoutes.Group("/owner")
+			ownerRoutes.Use(middleware.RequirePrivilege(util.OwnerRole))
+			{
+				ownerRoutes.POST("/create-library", api.Handler.OwnerHandler.CreateLibrary)
+				ownerRoutes.POST("/onboard-admin", api.Handler.OwnerHandler.CreateAdmin)
+				ownerRoutes.GET("/libraries", api.Handler.OwnerHandler.GetLibraries)
+				ownerRoutes.POST("/admins", api.Handler.OwnerHandler.GetAdmins)
+			}
+			adminRoutes := protectedRoutes.Group("/admin")
+			adminRoutes.Use(middleware.RequirePrivilege(util.AdminRole))
+			{
+				adminRoutes.POST("/add-book", api.Handler.AdminHandler.AddBook)
+				adminRoutes.POST("/remove-book", api.Handler.AdminHandler.RemoveBook)
+				adminRoutes.PATCH("/update-book", api.Handler.AdminHandler.UpdateBook)
+				adminRoutes.GET("/issue-requests", api.Handler.AdminHandler.ListIssueRequests)
+				adminRoutes.POST("/approve-issue-request", api.Handler.AdminHandler.ApproveIssueRequest)
+				adminRoutes.POST("/reject-issue-request", api.Handler.AdminHandler.RejectIssueRequest)
+				adminRoutes.POST("/books", api.Handler.AdminHandler.SearchBook)
+				adminRoutes.GET("/books/:isbn", api.Handler.AdminHandler.SearchBookByISBN)
+
+			}
+			readerRoutes := protectedRoutes.Group("/reader")
+			readerRoutes.Use(middleware.RequirePrivilege(util.ReaderRole))
+			{
+				readerRoutes.GET("/latest/:isbn", api.Handler.ReaderHandler.GetLatestAvailability)
+				readerRoutes.POST("/books", api.Handler.ReaderHandler.SearchBook)
+				readerRoutes.POST("/request-issue", api.Handler.ReaderHandler.RaiseIssueRequest)
+			}
 		}
 	}
-	return
 }
 
 func (api *API) Run() error {
@@ -91,7 +107,7 @@ func (api *API) Run() error {
 
 	go func() {
 		log.Print("Starting Server in 5 seconds...")
-		time.Sleep(5 * time.Second)
+		time.Sleep(1 * time.Second)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen: %s\n", err)
 		}
@@ -102,7 +118,7 @@ func (api *API) Run() error {
 	<-quit
 	log.Print("Shutting down Server in 5 seconds...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatal("Server Shutdown: ", err)

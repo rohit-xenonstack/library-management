@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,7 +22,7 @@ func addAuthorization(
 	t *testing.T,
 	request *http.Request,
 	authorizationType string,
-	userID uuid.UUID,
+	userID string,
 	role string,
 	duration time.Duration,
 ) {

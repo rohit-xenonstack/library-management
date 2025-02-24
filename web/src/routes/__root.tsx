@@ -1,33 +1,21 @@
-import { QueryClient } from "@tanstack/react-query";
-import {
-  createRootRouteWithContext,
-  Link,
-  Outlet,
-} from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/router-devtools";
-import { AuthContextType } from "../context/AuthContext";
-import { Dashboard } from "../components/layout/Dashboard";
+import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
+import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 
-interface RouterContext {
-  auth: AuthContextType;
-  queryClient: QueryClient;
-}
+import { Navigation } from '../components/navbar'
+import type { RouterContext } from '../lib/router'
 
 export const Route = createRootRouteWithContext<RouterContext>()({
-  component: () => (
+  component: RootComponent,
+})
+
+function RootComponent() {
+  return (
     <>
-      <Dashboard>Dashboard</Dashboard>
-      <div className="p-2 flex gap-2">
-        <Link to="/" className="[&.active]:font-bold">
-          Home
-        </Link>{" "}
-        <Link to="/about" className="[&.active]:font-bold">
-          About
-        </Link>
-      </div>
-      <hr />
+      <Navigation />
+
       <Outlet />
-      <TanStackRouterDevtools />
+
+      <TanStackRouterDevtools position='bottom-right' />
     </>
-  ),
-});
+  )
+}

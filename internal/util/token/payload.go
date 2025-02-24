@@ -2,10 +2,10 @@ package token
 
 import (
 	"errors"
+	"library-management/backend/internal/util"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 )
 
 var (
@@ -14,18 +14,15 @@ var (
 )
 
 type Payload struct {
-	ID       uuid.UUID `json:"id"`
-	UserID   uuid.UUID `json:"user_id"`
+	ID       string    `json:"id"`
+	UserID   string    `json:"user_id"`
 	Role     string    `json:"role"`
 	IssuedAt time.Time `json:"issued_at"`
 	Expires  time.Time `json:"expires"`
 }
 
-func NewPayload(userID uuid.UUID, role string, duration time.Duration) (*Payload, error) {
-	tokenID, err := uuid.NewRandom()
-	if err != nil {
-		return nil, err
-	}
+func NewPayload(userID string, role string, duration time.Duration) (*Payload, error) {
+	tokenID := util.RandomUUID()
 
 	payload := &Payload{
 		ID:       tokenID,

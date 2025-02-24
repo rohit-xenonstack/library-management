@@ -1,0 +1,61 @@
+@use '../variables.scss' as vars;
+
+.card {
+  background-color: vars.$color-white;
+  border-radius: 0.5rem;
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid vars.$color-gray-200;
+}
+
+.cardHeader {
+  padding: 1.25rem 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: vars.$color-gray-900;
+  border-bottom: 1px solid vars.$color-gray-200;
+}
+
+.cardContent {
+  padding: 1.5rem;
+  color: vars.$color-gray-700;
+  font-size: 1rem;
+  flex: 1;
+}
+
+.cardFooter {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid vars.$color-gray-200;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+// Variants (optional, for different card styles)
+.card--primary {
+  background-color: vars.$color-gray-100;
+}
+
+.card--secondary {
+  background-color: vars.$color-gray-50;
+}
+
+// Responsive adjustments (optional)
+@media (max-width: 768px) {
+  .cardHeader {
+    padding: 1rem;
+    font-size: 1.125rem;
+  }
+
+  .cardContent {
+    padding: 1rem;
+  }
+
+  .cardFooter {
+    padding: 1rem;
+  }
+}

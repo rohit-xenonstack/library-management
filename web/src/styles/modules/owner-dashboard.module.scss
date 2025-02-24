@@ -1,0 +1,158 @@
+@use '../variables.scss' as vars;
+
+.container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.section {
+  margin-bottom: 3rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  color: vars.$color-gray-900;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid vars.$color-gray-200;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  background-color: vars.$color-white;
+  border: 1px solid vars.$color-gray-200;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.cardHeader {
+  padding: 1.25rem;
+  border-bottom: 1px solid vars.$color-gray-200;
+  background-color: vars.$color-gray-50;
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: vars.$color-gray-900;
+  margin-bottom: 0.5rem;
+}
+
+.cardSubTitle {
+  font-size: 1rem;
+  font-weight: 400;
+  color: vars.$color-gray-500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.date {
+  font-size: 0.875rem;
+  color: vars.$color-gray-600;
+}
+
+.cardContent {
+  padding: 1.25rem;
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid vars.$color-gray-100;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: vars.$color-gray-600;
+}
+
+.statValue {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: vars.$color-gray-900;
+}
+
+.loading,
+.error {
+  text-align: center;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  margin: 2rem auto;
+  max-width: 600px;
+}
+
+.loading {
+  color: vars.$color-gray-600;
+  background-color: vars.$color-gray-50;
+}
+
+.error {
+  color: vars.$color-error;
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.currentLibrary {
+  border: 2px solid vars.$color-gray-900;
+  background-color: vars.$color-gray-50;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .cardHeader {
+    background-color: vars.$color-gray-100;
+  }
+}
+
+.currentBadge {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  margin-left: 0.5rem;
+  background-color: vars.$color-gray-900;
+  color: vars.$color-white;
+  border-radius: 1rem;
+  vertical-align: middle;
+}
+
+.libraryId {
+  font-size: 0.875rem;
+  color: vars.$color-gray-600;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -8,12 +8,11 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type OwnerRepositoryInterface interface {
-	CreateLibrary(*context.Context, *model.Library, uuid.UUID) error
+	CreateLibraryWithUser(*context.Context, *model.Library, *model.Users) error
 	CreateUser(*context.Context, *model.Users) error
 	OnboardAdmin(*context.Context, *model.Users) error
 }
@@ -31,28 +30,25 @@ func NewOwnerRepository(db *gorm.DB, txManager *transaction.TxManager) *OwnerRep
 	}
 }
 
-func (owner *OwnerRepository) CreateLibrary(ctx context.Context, library *model.Library, userID uuid.UUID) error {
+func (owner *OwnerRepository) CreateLibraryWithUser(ctx context.Context, library *model.Library, user *model.Users) error {
 	owner.mu.Lock()
 	defer owner.mu.Unlock()
 
 	return owner.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
-		var userFields model.Users
-		if err := tx.Set("gorm:query_option", "FOR UPDATE").
-			Where("id = ?", userID).
-			First(&userFields).Error; err != nil {
-			return err
-		}
-
-		if userFields.LibID != nil {
-			return errors.New("only one library can be created per owner")
+		var existingUser model.Users
+		result := tx.Set("gorm:query_option", "FOR UPDATE").
+			Where("email = ?", user.Email).
+			First(&existingUser)
+		if result.RowsAffected > 0 && errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return errors.New("user with supplied email already exists")
 		}
 
 		var existingLib model.Library
-		result := tx.Set("gorm:query_option", "FOR UPDATE").
+		result = tx.Set("gorm:query_option", "FOR UPDATE").
 			Where("name = ?", library.Name).
 			First(&existingLib)
 
-		if result.Error != nil {
+		if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return result.Error
 		}
 		if result.RowsAffected > 0 {
@@ -63,27 +59,7 @@ func (owner *OwnerRepository) CreateLibrary(ctx context.Context, library *model.
 			return err
 		}
 
-		return tx.Model(&model.Users{}).
-			Where("id = ?", userID).
-			Update("lib_id", library.ID).Error
-	})
-}
-
-func (owner *OwnerRepository) CreateUser(ctx *gin.Context, user *model.Users) error {
-	owner.mu.Lock()
-	defer owner.mu.Unlock()
-
-	return owner.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
-		var existingUser model.Users
-		result := tx.Set("gorm:query_option", "FOR UPDATE").
-			Where("email = ?", user.Email).
-			First(&existingUser)
-
-		if result.RowsAffected > 0 {
-			return errors.New("user with supplied email already exists")
-		}
-
-		return tx.Create(user).Error
+		return tx.Model(&model.Users{}).Create(&user).Error
 	})
 }
 
@@ -105,9 +81,43 @@ func (owner *OwnerRepository) OnboardAdmin(ctx *gin.Context, user *model.Users) 
 			Where("id = ?", user.LibID).
 			First(&existingLibrary)
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return errors.New("No library found with given ID")
+			return errors.New("no library found with given ID")
 		}
 
 		return tx.Create(user).Error
+	})
+}
+
+func (owner *OwnerRepository) GetLibraries(ctx *gin.Context, libraryDetails *[]model.LibraryDetails) error {
+	owner.mu.Lock()
+	defer owner.mu.Unlock()
+
+	return owner.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
+		query := `
+            SELECT
+								l.*,
+								u.name as owner_name,
+								u.email as owner_email,
+								COALESCE(b.total_books, 0) as total_books
+						FROM libraries l
+						LEFT JOIN users u ON l.id = u.lib_id
+						LEFT JOIN (
+								SELECT lib_id, COUNT(*) as total_books
+								FROM book_inventories
+								GROUP BY lib_id
+						) b ON b.lib_id = l.id
+						WHERE u.role = 'owner'
+        `
+
+		return tx.Raw(query).Scan(libraryDetails).Error
+	})
+}
+
+func (owner *OwnerRepository) GetAdmins(ctx context.Context, admins *[]model.Users, libraryID string) error {
+	owner.mu.Lock()
+	defer owner.mu.Unlock()
+
+	return owner.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
+		return tx.Model(&model.Users{}).Where("lib_id = ?", libraryID).Where("role = ?", "admin").Find(admins).Error
 	})
 }

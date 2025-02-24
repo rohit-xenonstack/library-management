@@ -1,64 +1,64 @@
 package model
 
-import (
-	"database/sql"
-	"time"
-
-	"github.com/google/uuid"
-)
-
 type Library struct {
-	ID   uuid.UUID `gorm:"type:uuid;primaryKey"`
-	Name string    `gorm:"unique"`
+	ID   string `gorm:"primaryKey" json:"library_id" binding:"required"`
+	Name string `gorm:"unique" json:"name" binding:"required"`
 }
 
 type Users struct {
-	ID            uuid.UUID  `gorm:"type:uuid;primaryKey" json:"user_id" binding:"required"`
-	Name          string     `gorm:"" json:"name" binding:"required"`
-	Email         string     `gorm:"unique" json:"email" binding:"required"`
-	ContactNumber string     `gorm:"" json:"contact" binding:"required"`
-	Role          string     `gorm:"" json:"role" binding:"required"`
-	Library       *Library   `gorm:"foreignKey:LibID;references:ID" json:"-"`
-	LibID         *uuid.UUID `gorm:"" json:"library_id"`
+	ID            string   `gorm:"primaryKey" json:"user_id" binding:"required"`
+	Name          string   `gorm:"" json:"name" binding:"required"`
+	Email         string   `gorm:"unique" json:"email" binding:"required"`
+	ContactNumber string   `gorm:"" json:"contact" binding:"required"`
+	Role          string   `gorm:"" json:"role" binding:"required"`
+	Library       *Library `gorm:"foreignKey:LibID;references:ID" json:"-"`
+	LibID         *string  `gorm:"" json:"library_id"`
 }
 
 type BookInventory struct {
-	ISBN            string     `gorm:"type:varchar(20);primaryKey" json:"isbn" binding:"required"`
-	Library         *Library   `gorm:"foreignKey:LibID;references:ID" json:"-"`
-	LibID           *uuid.UUID `gorm:"" json:"library_id" binding:"required"`
-	Title           string     `gorm:"" json:"title" binding:"required"`
-	Authors         string     `gorm:"" json:"authors" binding:"required"`
-	Publisher       string     `gorm:"" json:"publisher" binding:"required"`
-	Version         string     `gorm:"" json:"version" binding:"required"`
-	TotalCopies     uint       `gorm:"" json:"total_copies" binding:"required"`
-	AvailableCopies uint       `gorm:"" json:"available_copies" binding:"required"`
+	ISBN            string   `gorm:"type:varchar(20);primaryKey" json:"isbn" binding:"required"`
+	Library         *Library `gorm:"foreignKey:LibID;references:ID" json:"-"`
+	LibID           *string  `gorm:"" json:"library_id" binding:"required"`
+	Title           string   `gorm:"" json:"title" binding:"required"`
+	Authors         string   `gorm:"" json:"authors" binding:"required"`
+	Publisher       string   `gorm:"" json:"publisher" binding:"required"`
+	Version         string   `gorm:"" json:"version" binding:"required"`
+	TotalCopies     uint     `gorm:"" json:"total_copies" binding:"required"`
+	AvailableCopies uint     `gorm:"" json:"available_copies" binding:"required"`
 }
 
 type RequestEvents struct {
-	ReqID         uuid.UUID      `gorm:"type:uuid;primaryKey" json:"request_id"`
+	ReqID         string         `gorm:"primaryKey" json:"request_id" binding:"required"`
 	BookInventory *BookInventory `gorm:"foreignKey:BookID;references:ISBN" json:"-"`
-	BookID        string         `gorm:"" json:"isbn"`
+	BookID        string         `gorm:"" json:"isbn" binding:"required"`
 	Reader        *Users         `gorm:"foreignKey:ReaderID;references:ID" json:"-"`
-	ReaderID      uuid.UUID      `gorm:"" json:"reader_id"`
-	RequestDate   time.Time      `gorm:"" json:"request_date"`
-	ApprovalDate  sql.NullTime   `gorm:"" json:"approval_date"`
+	ReaderID      string         `gorm:"" json:"reader_id" binding:"required"`
+	RequestDate   string         `gorm:"" json:"request_date" binding:"required"`
+	ApprovalDate  *string        `gorm:"" json:"approval_date,omitempty"`
 	Admin         *Users         `gorm:"foreignKey:ApproverID;references:ID" json:"-"`
-	ApproverID    *uuid.UUID     `gorm:"" json:"approver_id"`
-	RequestType   string         `gorm:"" json:"request_type"`
+	ApproverID    *string        `gorm:"" json:"approver_id,omitempty"`
+	RequestType   string         `gorm:"" json:"request_type,omitempty"`
 }
 
 type IssueRegistry struct {
-	IssueID            uuid.UUID      `gorm:"type:uuid;primaryKey"`
+	IssueID            string         `gorm:"primaryKey"`
 	BookInventory      *BookInventory `gorm:"foreignKey:BookID;references:ISBN"`
 	BookID             string         `gorm:""`
 	Reader             *Users         `gorm:"foreignKey:ReaderID;references:ID"`
-	ReaderID           *uuid.UUID     `gorm:""`
+	ReaderID           string         `gorm:""`
 	AdminIssue         *Users         `gorm:"foreignKey:IssueApproverID;references:ID"`
-	IssueApproverID    *uuid.UUID     `gorm:""`
+	IssueApproverID    string         `gorm:""`
 	IssueStatus        string         `gorm:""`
-	IssueDate          time.Time      `gorm:""`
-	ExpectedReturnDate time.Time      `gorm:""`
-	ReturnDate         sql.NullTime   `gorm:""`
+	IssueDate          string         `gorm:""`
+	ExpectedReturnDate string         `gorm:""`
+	ReturnDate         *string        `gorm:""`
 	AdminReturn        *Users         `gorm:"foreignKey:ReturnApproverID;references:ID"`
-	ReturnApproverID   *uuid.UUID     `gorm:""`
+	ReturnApproverID   *string        `gorm:""`
+}
+
+type LibraryDetails struct {
+	Library
+	OwnerName  string `json:"owner_name"`
+	OwnerEmail string `json:"owner_email"`
+	TotalBooks int    `json:"total_books"`
 }

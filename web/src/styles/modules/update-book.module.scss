@@ -1,0 +1,145 @@
+@use '../variables.scss' as vars;
+
+.container {
+  max-width: 600px;
+  margin: auto;
+  padding: 2rem;
+  background-color: vars.$color-white;
+  border-radius: vars.$border-radius;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.02),
+    0 4px 8px rgba(0, 0, 0, 0.03);
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: vars.$color-gray-900;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: vars.$color-gray-700;
+  }
+
+  input {
+    padding: 0.75rem;
+    border: 1px solid vars.$color-gray-200;
+    border-radius: vars.$border-radius;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: vars.$color-gray-900;
+    }
+
+    &:disabled {
+      background-color: vars.$color-gray-50;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.submitButton,
+.cancelButton {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  border-radius: vars.$border-radius;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submitButton {
+  background-color: vars.$color-gray-900;
+  color: vars.$color-white;
+
+  &:hover:not(:disabled) {
+    background-color: vars.$color-gray-800;
+  }
+
+  &:disabled {
+    background-color: vars.$color-gray-500;
+    cursor: not-allowed;
+  }
+}
+
+.cancelButton {
+  background-color: vars.$color-white;
+  border: 1px solid vars.$color-gray-300;
+  color: vars.$color-gray-900;
+
+  &:hover:not(:disabled) {
+    background-color: vars.$color-gray-50;
+    border-color: vars.$color-gray-400;
+  }
+
+  &:disabled {
+    background-color: vars.$color-gray-50;
+    color: vars.$color-gray-400;
+    cursor: not-allowed;
+  }
+}
+
+.error {
+  padding: 0.75rem;
+  background-color: vars.$color-red-50;
+  border: 1px solid vars.$color-red-200;
+  border-radius: vars.$border-radius;
+  color: vars.$color-red-700;
+  font-size: 0.875rem;
+}
+
+.success {
+  padding: 0.75rem;
+  background-color: vars.$color-green-50;
+  border: 1px solid vars.$color-green-200;
+  border-radius: vars.$border-radius;
+  color: vars.$color-green-700;
+  font-size: 0.875rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: vars.$color-gray-600;
+}
+
+@media (max-width: 768px) {
+  .container {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .submitButton,
+  .cancelButton {
+    width: 100%;
+  }
+}

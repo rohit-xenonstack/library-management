@@ -10,104 +10,224 @@
 
 // Import Routes
 
-import { Route as rootRoute } from "./routes/__root";
-import { Route as AboutImport } from "./routes/about";
-import { Route as IndexImport } from "./routes/index";
-import { Route as authLoginImport } from "./routes/(auth)/login";
+import { Route as rootRoute } from './routes/__root'
+import { Route as SignInImport } from './routes/sign-in'
+import { Route as IndexImport } from './routes/index'
+import { Route as ownerOnboardAdminImport } from './routes/(owner)/onboard-admin'
+import { Route as ownerCreateLibraryImport } from './routes/(owner)/create-library'
+import { Route as adminIssueRequestsImport } from './routes/(admin)/issue-requests'
+import { Route as adminAddBookImport } from './routes/(admin)/add-book'
+import { Route as readerRegisterLibIDImport } from './routes/(reader)/register.$libID'
+import { Route as adminIsbnUpdateImport } from './routes/(admin)/$isbn.update'
 
 // Create/Update Routes
 
-const AboutRoute = AboutImport.update({
-  id: "/about",
-  path: "/about",
+const SignInRoute = SignInImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
 
 const IndexRoute = IndexImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
 
-const authLoginRoute = authLoginImport.update({
-  id: "/(auth)/login",
-  path: "/login",
+const ownerOnboardAdminRoute = ownerOnboardAdminImport.update({
+  id: '/(owner)/onboard-admin',
+  path: '/onboard-admin',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
+
+const ownerCreateLibraryRoute = ownerCreateLibraryImport.update({
+  id: '/(owner)/create-library',
+  path: '/create-library',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const adminIssueRequestsRoute = adminIssueRequestsImport.update({
+  id: '/(admin)/issue-requests',
+  path: '/issue-requests',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const adminAddBookRoute = adminAddBookImport.update({
+  id: '/(admin)/add-book',
+  path: '/add-book',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const readerRegisterLibIDRoute = readerRegisterLibIDImport.update({
+  id: '/(reader)/register/$libID',
+  path: '/register/$libID',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const adminIsbnUpdateRoute = adminIsbnUpdateImport.update({
+  id: '/(admin)/$isbn/update',
+  path: '/$isbn/update',
+  getParentRoute: () => rootRoute,
+} as any)
 
 // Populate the FileRoutesByPath interface
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/about": {
-      id: "/about";
-      path: "/about";
-      fullPath: "/about";
-      preLoaderRoute: typeof AboutImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/(auth)/login": {
-      id: "/(auth)/login";
-      path: "/login";
-      fullPath: "/login";
-      preLoaderRoute: typeof authLoginImport;
-      parentRoute: typeof rootRoute;
-    };
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInImport
+      parentRoute: typeof rootRoute
+    }
+    '/(admin)/add-book': {
+      id: '/(admin)/add-book'
+      path: '/add-book'
+      fullPath: '/add-book'
+      preLoaderRoute: typeof adminAddBookImport
+      parentRoute: typeof rootRoute
+    }
+    '/(admin)/issue-requests': {
+      id: '/(admin)/issue-requests'
+      path: '/issue-requests'
+      fullPath: '/issue-requests'
+      preLoaderRoute: typeof adminIssueRequestsImport
+      parentRoute: typeof rootRoute
+    }
+    '/(owner)/create-library': {
+      id: '/(owner)/create-library'
+      path: '/create-library'
+      fullPath: '/create-library'
+      preLoaderRoute: typeof ownerCreateLibraryImport
+      parentRoute: typeof rootRoute
+    }
+    '/(owner)/onboard-admin': {
+      id: '/(owner)/onboard-admin'
+      path: '/onboard-admin'
+      fullPath: '/onboard-admin'
+      preLoaderRoute: typeof ownerOnboardAdminImport
+      parentRoute: typeof rootRoute
+    }
+    '/(admin)/$isbn/update': {
+      id: '/(admin)/$isbn/update'
+      path: '/$isbn/update'
+      fullPath: '/$isbn/update'
+      preLoaderRoute: typeof adminIsbnUpdateImport
+      parentRoute: typeof rootRoute
+    }
+    '/(reader)/register/$libID': {
+      id: '/(reader)/register/$libID'
+      path: '/register/$libID'
+      fullPath: '/register/$libID'
+      preLoaderRoute: typeof readerRegisterLibIDImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
 // Create and export the route tree
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute;
-  "/about": typeof AboutRoute;
-  "/login": typeof authLoginRoute;
+  '/': typeof IndexRoute
+  '/sign-in': typeof SignInRoute
+  '/add-book': typeof adminAddBookRoute
+  '/issue-requests': typeof adminIssueRequestsRoute
+  '/create-library': typeof ownerCreateLibraryRoute
+  '/onboard-admin': typeof ownerOnboardAdminRoute
+  '/$isbn/update': typeof adminIsbnUpdateRoute
+  '/register/$libID': typeof readerRegisterLibIDRoute
 }
 
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute;
-  "/about": typeof AboutRoute;
-  "/login": typeof authLoginRoute;
+  '/': typeof IndexRoute
+  '/sign-in': typeof SignInRoute
+  '/add-book': typeof adminAddBookRoute
+  '/issue-requests': typeof adminIssueRequestsRoute
+  '/create-library': typeof ownerCreateLibraryRoute
+  '/onboard-admin': typeof ownerOnboardAdminRoute
+  '/$isbn/update': typeof adminIsbnUpdateRoute
+  '/register/$libID': typeof readerRegisterLibIDRoute
 }
 
 export interface FileRoutesById {
-  __root__: typeof rootRoute;
-  "/": typeof IndexRoute;
-  "/about": typeof AboutRoute;
-  "/(auth)/login": typeof authLoginRoute;
+  __root__: typeof rootRoute
+  '/': typeof IndexRoute
+  '/sign-in': typeof SignInRoute
+  '/(admin)/add-book': typeof adminAddBookRoute
+  '/(admin)/issue-requests': typeof adminIssueRequestsRoute
+  '/(owner)/create-library': typeof ownerCreateLibraryRoute
+  '/(owner)/onboard-admin': typeof ownerOnboardAdminRoute
+  '/(admin)/$isbn/update': typeof adminIsbnUpdateRoute
+  '/(reader)/register/$libID': typeof readerRegisterLibIDRoute
 }
 
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/" | "/about" | "/login";
-  fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/about" | "/login";
-  id: "__root__" | "/" | "/about" | "/(auth)/login";
-  fileRoutesById: FileRoutesById;
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths:
+    | '/'
+    | '/sign-in'
+    | '/add-book'
+    | '/issue-requests'
+    | '/create-library'
+    | '/onboard-admin'
+    | '/$isbn/update'
+    | '/register/$libID'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/sign-in'
+    | '/add-book'
+    | '/issue-requests'
+    | '/create-library'
+    | '/onboard-admin'
+    | '/$isbn/update'
+    | '/register/$libID'
+  id:
+    | '__root__'
+    | '/'
+    | '/sign-in'
+    | '/(admin)/add-book'
+    | '/(admin)/issue-requests'
+    | '/(owner)/create-library'
+    | '/(owner)/onboard-admin'
+    | '/(admin)/$isbn/update'
+    | '/(reader)/register/$libID'
+  fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  AboutRoute: typeof AboutRoute;
-  authLoginRoute: typeof authLoginRoute;
+  IndexRoute: typeof IndexRoute
+  SignInRoute: typeof SignInRoute
+  adminAddBookRoute: typeof adminAddBookRoute
+  adminIssueRequestsRoute: typeof adminIssueRequestsRoute
+  ownerCreateLibraryRoute: typeof ownerCreateLibraryRoute
+  ownerOnboardAdminRoute: typeof ownerOnboardAdminRoute
+  adminIsbnUpdateRoute: typeof adminIsbnUpdateRoute
+  readerRegisterLibIDRoute: typeof readerRegisterLibIDRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
-  authLoginRoute: authLoginRoute,
-};
+  SignInRoute: SignInRoute,
+  adminAddBookRoute: adminAddBookRoute,
+  adminIssueRequestsRoute: adminIssueRequestsRoute,
+  ownerCreateLibraryRoute: ownerCreateLibraryRoute,
+  ownerOnboardAdminRoute: ownerOnboardAdminRoute,
+  adminIsbnUpdateRoute: adminIsbnUpdateRoute,
+  readerRegisterLibIDRoute: readerRegisterLibIDRoute,
+}
 
 export const routeTree = rootRoute
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
 
 /* ROUTE_MANIFEST_START
 {
@@ -116,18 +236,38 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/about",
-        "/(auth)/login"
+        "/sign-in",
+        "/(admin)/add-book",
+        "/(admin)/issue-requests",
+        "/(owner)/create-library",
+        "/(owner)/onboard-admin",
+        "/(admin)/$isbn/update",
+        "/(reader)/register/$libID"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
-    "/about": {
-      "filePath": "about.tsx"
+    "/sign-in": {
+      "filePath": "sign-in.tsx"
     },
-    "/(auth)/login": {
-      "filePath": "(auth)/login.tsx"
+    "/(admin)/add-book": {
+      "filePath": "(admin)/add-book.tsx"
+    },
+    "/(admin)/issue-requests": {
+      "filePath": "(admin)/issue-requests.tsx"
+    },
+    "/(owner)/create-library": {
+      "filePath": "(owner)/create-library.tsx"
+    },
+    "/(owner)/onboard-admin": {
+      "filePath": "(owner)/onboard-admin.tsx"
+    },
+    "/(admin)/$isbn/update": {
+      "filePath": "(admin)/$isbn.update.tsx"
+    },
+    "/(reader)/register/$libID": {
+      "filePath": "(reader)/register.$libID.tsx"
     }
   }
 }

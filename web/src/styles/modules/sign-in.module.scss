@@ -1,0 +1,110 @@
+@use '../variables.scss' as vars;
+
+.signInContainer {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: vars.$color-gray-100;
+  padding: 1rem;
+}
+
+.formWrapper {
+  background-color: vars.$color-white;
+  padding: 2.5rem;
+  border-radius: vars.$border-radius;
+  box-shadow: vars.$box-shadow;
+  width: 100%;
+  max-width: 400px;
+}
+
+.title {
+  color: vars.$color-gray-900;
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid vars.$color-gray-200;
+  border-radius: vars.$border-radius;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: vars.$color-gray-600;
+  }
+
+  &::placeholder {
+    color: vars.$color-gray-400;
+  }
+}
+
+.button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: vars.$color-gray-900;
+  color: vars.$color-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: vars.$border-radius;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: vars.$color-gray-800;
+  }
+
+  &:disabled {
+    background-color: vars.$color-gray-500;
+    cursor: not-allowed;
+  }
+}
+
+.error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+// Media Queries
+@media (max-width: 480px) {
+  .formWrapper {
+    padding: 1.5rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+}
+
+.loader {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

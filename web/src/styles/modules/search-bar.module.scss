@@ -1,0 +1,133 @@
+@use '../variables.scss' as vars;
+
+.searchContainer {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.searchWrapper {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  background-color: vars.$color-white;
+  border: 2px solid vars.$color-gray-200;
+  border-radius: vars.$border-radius;
+  padding: 0.25rem;
+  transition: border-color 0.2s ease;
+
+  &:focus-within {
+    border-color: vars.$color-gray-900;
+  }
+}
+
+.searchSelect {
+  padding: 0.5rem;
+  border: 1px solid vars.$color-gray-200;
+  border-radius: calc(#{vars.$border-radius} - 2px);
+  background-color: vars.$color-gray-50;
+  color: vars.$color-gray-900;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: vars.$color-gray-300;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: vars.$color-gray-900;
+  }
+
+  &:disabled {
+    background-color: vars.$color-gray-100;
+    cursor: not-allowed;
+  }
+}
+
+.searchInput {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  font-size: 1rem;
+  color: vars.$color-gray-900;
+  background: transparent;
+
+  &::placeholder {
+    color: vars.$color-gray-400;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:disabled {
+    background-color: vars.$color-gray-50;
+    cursor: not-allowed;
+  }
+}
+
+.searchButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border: none;
+  border-radius: calc(#{vars.$border-radius} - 2px);
+  background-color: vars.$color-gray-900;
+  color: vars.$color-white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: vars.$color-gray-800;
+  }
+
+  &:disabled {
+    background-color: vars.$color-gray-500;
+    cursor: not-allowed;
+  }
+}
+
+.searchIcon {
+  width: 20px;
+  height: 20px;
+}
+
+.loader {
+  width: 20px;
+  height: 20px;
+  border: 2px solid vars.$color-gray-200;
+  border-top-color: vars.$color-white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .searchContainer {
+    padding: 0.75rem;
+  }
+
+  .searchWrapper {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .searchSelect {
+    width: 100%;
+  }
+
+  .searchButton {
+    width: 100%;
+    padding: 0.75rem;
+  }
+}

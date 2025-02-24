@@ -29,9 +29,9 @@ func NewAuthMiddleware(auth *repository.AuthRepository) *AuthMiddleware {
 	}
 }
 
-type authHeader struct {
-	BasicToken string `header:"Authorization"`
-}
+// type authHeader struct {
+// 	BasicToken string `header:"Authorization"`
+// }
 
 func JWTAuth() gin.HandlerFunc {
 	tokenMaker, _ := token.NewJWTMaker(os.Getenv("JWT_SECRET_KEY"))
@@ -86,7 +86,7 @@ func RequirePrivilege(requiredRole string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		payload, ok := ctx.Get(AuthorizationPayloadKey)
 		if !ok {
-			err := fmt.Errorf("Session not found in context")
+			err := fmt.Errorf("session not found in context")
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"status":  "error",
 				"payload": err.Error(),
@@ -96,7 +96,7 @@ func RequirePrivilege(requiredRole string) gin.HandlerFunc {
 
 		contextPayload := payload.(*token.Payload)
 		if contextPayload.Role != requiredRole {
-			err := fmt.Errorf("Access denied. %s role required", requiredRole)
+			err := fmt.Errorf("access denied. %s role required", requiredRole)
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"status":  "error",
 				"payload": err.Error(),

@@ -1,0 +1,184 @@
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
+import { z } from 'zod'
+
+import { getBook, updateBook } from '../../api/admin'
+import styles from '../../styles/modules/update-book.module.scss'
+import type { Book } from '../../api/admin'
+
+export const Route = createFileRoute('/(admin)/$isbn/update')({
+  validateSearch: z.object({
+    redirect: z.string().optional().catch(''),
+  }),
+  beforeLoad: ({ context }) => {
+    if (!context.auth.user) {
+      throw redirect({
+        to: '/sign-in',
+      })
+    }
+    if (context.auth.user.role !== 'admin') {
+      throw redirect({
+        to: '/',
+      })
+    }
+  },
+  component: UpdateBook,
+})
+
+function UpdateBook() {
+  const { isbn } = Route.useParams()
+  const navigate = useNavigate()
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [book, setBook] = useState<Book | null>(null)
+  const [formData, setFormData] = useState({
+    title: '',
+    authors: '',
+    publisher: '',
+    version: '',
+  })
+
+  useEffect(() => {
+    const fetchBook = async () => {
+      try {
+        const response = await getBook(isbn)
+        if (response.status === 'success') {
+          setBook(response.payload)
+          console.log(response.payload)
+          setFormData({
+            title: response.payload.title,
+            authors: response.payload.authors,
+            publisher: response.payload.publisher,
+            version: response.payload.version,
+          })
+        }
+      } catch (err) {
+        console.error(err)
+        setError('Failed to fetch book details')
+      }
+    }
+    fetchBook()
+  }, [isbn])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      const response = await updateBook({
+        isbn,
+        ...formData,
+      })
+
+      if (response.status === 'success') {
+        setSuccess('Book updated successfully!')
+        setTimeout(() => {
+          navigate({ to: '/' })
+        }, 2000)
+      } else {
+        setError(response.payload || 'Failed to update book')
+      }
+    } catch (err) {
+      console.error(err)
+      setError('An error occurred while updating the book')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (!book) {
+    return <div className={styles.loading}>Loading...</div>
+  }
+
+  return (
+    <div className={styles.container}>
+      <h1 className={styles.title}>Update Book</h1>
+      <form className={styles.form} onSubmit={handleSubmit}>
+        <div className={styles.formGroup}>
+          <label htmlFor='isbn'>ISBN</label>
+          <input type='text' id='isbn' value={isbn} disabled />
+        </div>
+        <div className={styles.formGroup}>
+          <label htmlFor='title'>Title</label>
+          <input
+            type='text'
+            id='title'
+            value={formData.title}
+            onChange={(e) =>
+              setFormData({ ...formData, title: e.target.value })
+            }
+            disabled={isLoading}
+            required
+            min={1}
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label htmlFor='authors'>Authors</label>
+          <input
+            type='text'
+            id='authors'
+            value={formData.authors}
+            onChange={(e) =>
+              setFormData({ ...formData, authors: e.target.value })
+            }
+            disabled={isLoading}
+            required
+            min={3}
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label htmlFor='publisher'>Publisher</label>
+          <input
+            type='text'
+            id='publisher'
+            value={formData.publisher}
+            onChange={(e) =>
+              setFormData({ ...formData, publisher: e.target.value })
+            }
+            disabled={isLoading}
+            required
+            min={3}
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label htmlFor='version'>Version</label>
+          <input
+            type='text'
+            id='version'
+            value={formData.version}
+            onChange={(e) =>
+              setFormData({ ...formData, version: e.target.value })
+            }
+            disabled={isLoading}
+            required
+            min={1}
+          />
+        </div>
+
+        {error && <div className={styles.error}>{error}</div>}
+        {success && <div className={styles.success}>{success}</div>}
+
+        <div className={styles.actions}>
+          <button
+            type='button'
+            className={styles.cancelButton}
+            onClick={() => navigate({ to: '/' })}
+            disabled={isLoading}
+          >
+            Cancel
+          </button>
+          <button
+            type='submit'
+            className={styles.submitButton}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Updating...' : 'Update Book'}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}

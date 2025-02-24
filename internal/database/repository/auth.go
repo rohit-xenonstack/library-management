@@ -7,7 +7,6 @@ import (
 	"library-management/backend/internal/database/transaction"
 	"sync"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -46,7 +45,7 @@ func (auth *AuthRepository) Login(ctx context.Context, email string) (*model.Use
 	return &user, nil
 }
 
-func (auth *AuthRepository) UserDetails(ctx context.Context, userID uuid.UUID) (*model.Users, error) {
+func (auth *AuthRepository) UserDetails(ctx context.Context, userID string) (*model.Users, error) {
 	auth.mu.RLock()
 	defer auth.mu.RUnlock()
 
@@ -69,13 +68,21 @@ func (auth *AuthRepository) UserSignup(ctx context.Context, user model.Users) er
 	defer auth.mu.RUnlock()
 
 	return auth.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
-		var existingUser model.Users
-		result := tx.Set("gorm:query_option", "FOR SHARE").Where("email = ?", user.Email).First(&existingUser)
-
-		if result.RowsAffected > 0 {
-			return errors.New("User with supplied email already exists")
+		var existingLibrary model.Library
+		result := tx.Set("gorm:query_option", "FOR SHARE").Where("ID = ?", user.LibID).First(&existingLibrary)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				return errors.New("library not found")
+			}
+			return result.Error
 		}
 
+		var existingUser model.Users
+		result = tx.Set("gorm:query_option", "FOR SHARE").Where("email = ?", user.Email).First(&existingUser)
+
+		if result.RowsAffected > 0 {
+			return errors.New("user with supplied email already exists")
+		}
 		if !errors.Is(result.Error, gorm.ErrRecordNotFound) && result.Error != nil {
 			return result.Error
 		}

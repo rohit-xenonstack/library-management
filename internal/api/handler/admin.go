@@ -1,13 +1,13 @@
 package handler
 
 import (
-	"fmt"
+	"errors"
 	"library-management/backend/internal/api/model"
 	"library-management/backend/internal/database/repository"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type AdminHandler struct {
@@ -39,16 +39,21 @@ type ListIssueRequestResponse struct {
 }
 
 type RequestDetails struct {
-	RequestID uuid.UUID `json:"request_id" binding:"required"`
-	AdminID   uuid.UUID `json:"user_id" binding:"required"`
+	RequestID string `json:"request_id" binding:"required"`
+	AdminID   string `json:"user_id" binding:"required"`
 }
 
 type UpdateBookRequest struct {
-	ISBN      string  `json:"isbn" binding:"required"`
-	Title     *string `json:"title,omitempty"`
-	Authors   *string `json:"authors,omitempty"`
-	Publisher *string `json:"publisher,omitempty"`
-	Version   *string `json:"version,omitempty"`
+	ISBN      string `json:"isbn" binding:"required"`
+	Title     string `json:"title" binding:"required"`
+	Authors   string `json:"authors" binding:"required"`
+	Publisher string `json:"publisher" binding:"required"`
+	Version   string `json:"version" binding:"required"`
+}
+
+type GetBookByISBNResponse struct {
+	Status  string               `json:"status"`
+	Payload *model.BookInventory `json:"payload"`
 }
 
 func (admin *AdminHandler) AddBook(ctx *gin.Context) {
@@ -81,12 +86,11 @@ func (admin *AdminHandler) AddBook(ctx *gin.Context) {
 		return
 	}
 
-	responseMsg := fmt.Sprint("Book Added successfuly")
+	responseMsg := "Book Added successfuly"
 	ctx.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"payload": responseMsg,
 	})
-	return
 }
 
 func (admin *AdminHandler) RemoveBook(ctx *gin.Context) {
@@ -110,12 +114,11 @@ func (admin *AdminHandler) RemoveBook(ctx *gin.Context) {
 		return
 	}
 
-	responseMsg := fmt.Sprint("Book removed successfuly")
+	responseMsg := "Book removed successfuly"
 	ctx.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"payload": responseMsg,
 	})
-	return
 }
 
 func (admin *AdminHandler) UpdateBook(ctx *gin.Context) {
@@ -129,6 +132,7 @@ func (admin *AdminHandler) UpdateBook(ctx *gin.Context) {
 		return
 	}
 
+	log.Print(updateBookRequest)
 	err := admin.AdminRepository.UpdateBook(ctx, updateBookRequest.ISBN, updateBookRequest.Title, updateBookRequest.Authors, updateBookRequest.Publisher, updateBookRequest.Version)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -138,16 +142,15 @@ func (admin *AdminHandler) UpdateBook(ctx *gin.Context) {
 		return
 	}
 
-	responseMsg := fmt.Sprint("Book updated successfuly")
+	responseMsg := "Book updated successfuly"
 	ctx.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"payload": responseMsg,
 	})
-	return
 }
 
 func (admin *AdminHandler) ListIssueRequests(ctx *gin.Context) {
-	issueRequests := make([]model.RequestEvents, 0)
+	issueRequests := make([]repository.IssueRequestDetails, 0)
 	err := admin.AdminRepository.ListIssueRequests(ctx, &issueRequests)
 
 	if err != nil {
@@ -158,8 +161,9 @@ func (admin *AdminHandler) ListIssueRequests(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, issueRequests)
-	return
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"payload": issueRequests})
 }
 
 func (admin *AdminHandler) ApproveIssueRequest(ctx *gin.Context) {
@@ -183,12 +187,11 @@ func (admin *AdminHandler) ApproveIssueRequest(ctx *gin.Context) {
 		return
 	}
 
-	responseMsg := fmt.Sprint("Book issue request approved")
+	responseMsg := "Book issue request approved"
 	ctx.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"payload": responseMsg,
 	})
-	return
 }
 
 func (admin *AdminHandler) RejectIssueRequest(ctx *gin.Context) {
@@ -212,10 +215,85 @@ func (admin *AdminHandler) RejectIssueRequest(ctx *gin.Context) {
 		return
 	}
 
-	responseMsg := fmt.Sprint("Book issue Request rejected")
+	responseMsg := "Book issue Request rejected"
 	ctx.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"payload": responseMsg,
 	})
-	return
+}
+
+func (admin *AdminHandler) SearchBook(ctx *gin.Context) {
+	var searchBookRequest SearchBookRequest
+
+	if err := ctx.ShouldBindJSON(&searchBookRequest); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"payload": "invalid request parameters",
+		})
+		return
+	}
+
+	books := make([]model.BookInventory, 0)
+	switch searchBookRequest.Field {
+	case "title":
+		err := admin.AdminRepository.SearchBookByTitle(ctx, searchBookRequest.SearchString, &books)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"payload": err.Error(),
+			})
+			return
+		}
+	case "authors":
+		err := admin.AdminRepository.SearchBookByAuthor(ctx, searchBookRequest.SearchString, &books)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"payload": err.Error(),
+			})
+			return
+		}
+	case "publisher":
+		err := admin.AdminRepository.SearchBookByPublisher(ctx, searchBookRequest.SearchString, &books)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"payload": err.Error(),
+			})
+			return
+		}
+	default:
+		err := errors.New("wrong field specified for book search")
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"payload": err.Error(),
+		})
+		return
+	}
+
+	response := SearchBookResponse{
+		Status:  "success",
+		Payload: books,
+	}
+	ctx.JSON(http.StatusCreated, response)
+}
+
+func (admin *AdminHandler) SearchBookByISBN(ctx *gin.Context) {
+	var book model.BookInventory
+	isbn := ctx.Param("isbn")
+
+	err := admin.AdminRepository.SearchBookByISBN(ctx, isbn, &book)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"payload": err.Error(),
+		})
+		return
+	}
+
+	response := GetBookByISBNResponse{
+		Status:  "success",
+		Payload: &book,
+	}
+	ctx.JSON(http.StatusCreated, response)
 }

@@ -57,7 +57,7 @@ func (reader *ReaderHandler) SearchBook(ctx *gin.Context) {
 			return
 		}
 	case "authors":
-		err := reader.ReaderRepository.SearchBookByTitle(ctx, searchBookRequest.SearchString, &books)
+		err := reader.ReaderRepository.SearchBookByAuthor(ctx, searchBookRequest.SearchString, &books)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"status":  "error",
@@ -66,7 +66,7 @@ func (reader *ReaderHandler) SearchBook(ctx *gin.Context) {
 			return
 		}
 	case "publisher":
-		err := reader.ReaderRepository.SearchBookByTitle(ctx, searchBookRequest.SearchString, &books)
+		err := reader.ReaderRepository.SearchBookByPublisher(ctx, searchBookRequest.SearchString, &books)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"status":  "error",
@@ -75,7 +75,7 @@ func (reader *ReaderHandler) SearchBook(ctx *gin.Context) {
 			return
 		}
 	default:
-		err := errors.New("Wrong field specified for book search")
+		err := errors.New("wrong field specified for book search")
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"payload": err.Error(),
@@ -88,7 +88,6 @@ func (reader *ReaderHandler) SearchBook(ctx *gin.Context) {
 		Payload: books,
 	}
 	ctx.JSON(http.StatusCreated, response)
-	return
 }
 
 func (reader *ReaderHandler) RaiseIssueRequest(ctx *gin.Context) {
@@ -113,5 +112,21 @@ func (reader *ReaderHandler) RaiseIssueRequest(ctx *gin.Context) {
 		"status":  "success",
 		"payload": "Raised Issue Request successfuly",
 	})
-	return
+}
+
+func (reader *ReaderHandler) GetLatestAvailability(ctx *gin.Context) {
+	isbn := ctx.Param("isbn")
+	var latestDate string
+	err := reader.ReaderRepository.GetLatestBookAvailability(ctx, isbn, &latestDate)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"payload": err.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"payload": latestDate,
+	})
 }
