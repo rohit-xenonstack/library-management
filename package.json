@@ -1,6 +1,0 @@
-{
-  "devDependencies": {
-    "@tanstack/router-devtools": "^1.109.2",
-    "@tanstack/router-plugin": "^1.109.2"
-  }
-}
