@@ -1,48 +1,42 @@
-import type { AfterResponseHook, BeforeRequestHook } from 'ky'
+import ky, { type BeforeRequestHook } from 'ky'
 
-import { refreshToken } from '../api/auth'
 import { ACCESS_TOKEN } from '../lib/constants'
-import { router } from '../lib/router'
+import { router } from './router'
 import { isTokenExpired } from '../utils/jwt'
 
-export const beforeRequest: BeforeRequestHook = async (request) => {
-  const token = localStorage.getItem(ACCESS_TOKEN)
-  if (!token) return
-
-  if (isTokenExpired(token)) {
-    const newToken = await refreshToken()
-    if (newToken) {
-      request.headers.set('Authorization', `Bearer ${newToken}`)
-      return
-    }
-    router.navigate({
-      to: '/sign-in',
-      search: { redirect: window.location.pathname },
-    })
-    return
+interface ResRefresh {
+  status: string
+  payload: {
+    access_token?: string
+    message: string
   }
-
-  request.headers.set('Authorization', `Bearer ${token}`)
 }
 
-export const afterResponse: AfterResponseHook = async (
-  request,
-  options, // eslint-disable-line @typescript-eslint/no-unused-vars
-  response,
-) => {
-  if (response.status === 401) {
-    const newToken = await refreshToken()
+const baseApiUrl = import.meta.env.VITE_BASE_API_URL
 
-    if (!newToken || !newToken.payload || newToken?.status === 'error') {
-      router.navigate({
-        to: '/sign-in',
-        search: { redirect: window.location.pathname },
+export const beforeRequest: BeforeRequestHook = async (request) => {
+  var token = localStorage.getItem(ACCESS_TOKEN)
+  if (!token) return
+  if (isTokenExpired(token)) {
+    const data = await ky
+      .get(`${baseApiUrl}/auth/refresh`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN)}`,
+        },
+        retry: 0,
       })
-      return response
+      .json<ResRefresh>()
+    console.log('Access token refreshed:' + data)
+    if (data.payload.access_token === undefined) {
+      localStorage.removeItem(ACCESS_TOKEN)
+      sessionStorage.removeItem('user')
+      router.navigate({ to: '/sign-in' })
+      return
     }
-
-    localStorage.setItem(ACCESS_TOKEN, newToken.payload?.access_token)
-    request.headers.set('Authorization', `Bearer ${newToken}`)
+    token = data.payload.access_token
+    console.log('Access token refreshed:', token)
+    localStorage.setItem(ACCESS_TOKEN, token)
   }
-  return response
+  request.headers.set('Authorization', `Bearer ${token}`)
+  return ky(request)
 }

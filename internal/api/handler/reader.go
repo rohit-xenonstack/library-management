@@ -141,3 +141,22 @@ func (reader *ReaderHandler) GetLatestAvailability(ctx *gin.Context) {
 		"payload": latestDate,
 	})
 }
+
+func (reader *ReaderHandler) GetLatestBooks(ctx *gin.Context) {
+	books := make([]model.BookInventory, 0)
+	err := reader.ReaderRepository.GetBooks(ctx, &books)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": err.Error(),
+			"payload": nil,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Books fetched successfully",
+		"payload": books,
+	})
+}

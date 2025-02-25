@@ -60,7 +60,7 @@ func (api *API) SetupRouter() {
 		{
 			authRoutes.POST("/login", api.Handler.AuthHandler.Login)
 			authRoutes.POST("/register", api.Handler.AuthHandler.UserSignup)
-			authRoutes.POST("/refresh", api.Handler.AuthHandler.RefreshToken)
+			authRoutes.GET("/refresh", api.Handler.AuthHandler.RefreshToken)
 		}
 
 		protectedRoutes := baseRoute.Group("/protected")
@@ -86,6 +86,7 @@ func (api *API) SetupRouter() {
 				adminRoutes.POST("/reject-issue-request", api.Handler.AdminHandler.RejectIssueRequest)
 				adminRoutes.POST("/books", api.Handler.AdminHandler.SearchBook)
 				adminRoutes.GET("/books/:isbn", api.Handler.AdminHandler.SearchBookByISBN)
+				adminRoutes.GET("/list-books", api.Handler.AdminHandler.GetBooks)
 
 			}
 			readerRoutes := protectedRoutes.Group("/reader")
@@ -94,6 +95,7 @@ func (api *API) SetupRouter() {
 				readerRoutes.GET("/latest/:isbn", api.Handler.ReaderHandler.GetLatestAvailability)
 				readerRoutes.POST("/books", api.Handler.ReaderHandler.SearchBook)
 				readerRoutes.POST("/request-issue", api.Handler.ReaderHandler.RaiseIssueRequest)
+				readerRoutes.GET("/get-books", api.Handler.ReaderHandler.GetLatestBooks)
 			}
 		}
 	}

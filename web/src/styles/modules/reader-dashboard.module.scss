@@ -45,6 +45,9 @@
   font-weight: 600;
   color: vars.$color-gray-900;
   margin-bottom: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .bookDetails {
@@ -72,7 +75,7 @@
 .bookActions {
   display: flex;
   gap: 1rem;
-  margin-top: auto;
+  // margin-top: auto;
   flex-direction: column;
 }
 
@@ -148,7 +151,7 @@
 .availabilityInfo {
   margin-top: 1rem;
   padding: 0.75rem;
-  background-color: vars.$color-gray-50;
+  background-color: vars.$color-gray-200;
   border-radius: vars.$border-radius;
   font-size: 0.875rem;
   color: vars.$color-gray-900;

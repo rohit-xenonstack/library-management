@@ -35,7 +35,6 @@
   align-items: center;
 }
 
-// Variants (optional, for different card styles)
 .card--primary {
   background-color: vars.$color-gray-100;
 }
@@ -44,7 +43,6 @@
   background-color: vars.$color-gray-50;
 }
 
-// Responsive adjustments (optional)
 @media (max-width: 768px) {
   .cardHeader {
     padding: 1rem;

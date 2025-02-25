@@ -1,19 +1,39 @@
+import { useState, useEffect } from 'react'
 import { Link } from '@tanstack/react-router'
-import { useState } from 'react'
-
-import { decreaseBookCount, searchBooks } from '../api/admin'
+import { decreaseBookCount, searchBooks, getLatestBooks } from '../api/admin'
 import { SearchBar } from '../components/search-bar'
 import styles from '../styles/modules/admin-dashboard.module.scss'
 import type { Book } from '../api/admin'
 
-type SearchField = 'title' | 'authors' | 'publisher'
-
 export function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(false)
   const [books, setBooks] = useState<Book[]>([])
+  const [latestBooks, setLatestBooks] = useState<Book[]>([])
   const [error, setError] = useState('')
+  const [latestBooksError, setLatestBooksError] = useState('')
 
-  const handleSearch = async (searchString: string, field: SearchField) => {
+  useEffect(() => {
+    const fetchLatestBooks = async () => {
+      try {
+        const response = await getLatestBooks()
+        if (response.status === 'success' && response.payload) {
+          setLatestBooks(response.payload)
+        } else {
+          setLatestBooksError('Failed to fetch latest books')
+        }
+      } catch (err) {
+        console.error(err)
+        setLatestBooksError('An error occurred while fetching latest books')
+      }
+    }
+
+    fetchLatestBooks()
+  }, [])
+
+  const handleSearch = async (
+    searchString: string,
+    field: 'title' | 'authors' | 'publisher',
+  ) => {
     setIsLoading(true)
     setError('')
     try {
@@ -47,6 +67,17 @@ export function AdminDashboard() {
               : book,
           ),
         )
+        setLatestBooks((prevBooks) =>
+          prevBooks.map((latestBook) =>
+            latestBook.isbn === isbn
+              ? {
+                  ...latestBook,
+                  available_copies: latestBook.available_copies - 1,
+                  total_copies: latestBook.total_copies - 1,
+                }
+              : latestBook,
+          ),
+        )
       } else {
         setError('Failed to decrease book count')
       }
@@ -77,6 +108,22 @@ export function AdminDashboard() {
           ))}
         </div>
       )}
+
+      <section className={styles.latestBooksSection}>
+        <h2>Latest Added Books</h2>
+        {latestBooksError && (
+          <div className={styles.error}>{latestBooksError}</div>
+        )}
+        <div className={styles.booksGrid}>
+          {latestBooks.map((book) => (
+            <BookCard
+              key={book.isbn}
+              book={book}
+              onDecreaseCount={() => handleDecreaseCount(book.isbn)}
+            />
+          ))}
+        </div>
+      </section>
     </div>
   )
 }

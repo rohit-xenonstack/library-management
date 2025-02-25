@@ -41,17 +41,12 @@ export function OwnerDashboard() {
     const fetchData = async () => {
       try {
         const [librariesRes, adminsRes] = await Promise.all([
-          api
-            .get('protected/owner/libraries', {
-              throwHttpErrors: false,
-            })
-            .json<{ libraries: Library[] }>(),
+          api.get('protected/owner/libraries').json<{ libraries: Library[] }>(),
           api
             .post('protected/owner/admins', {
               json: {
                 library_id: auth.user?.library_id,
               },
-              throwHttpErrors: false,
             })
             .json<{ admins: Admin[] }>(),
         ])

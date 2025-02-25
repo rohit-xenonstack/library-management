@@ -251,3 +251,12 @@ func (admin *AdminRepository) SearchBookByISBN(ctx *gin.Context, isbn string, bo
 		return tx.Set("gorm:query_option", "FOR UPDATE").Model(&model.BookInventory{}).Where("isbn = ?", isbn).First(&book).Error
 	})
 }
+
+func (admin *AdminRepository) GetBooks(ctx *gin.Context, books *[]model.BookInventory) error {
+	admin.mu.Lock()
+	defer admin.mu.Unlock()
+
+	return admin.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
+		return tx.Model(&model.BookInventory{}).Find(&books).Error
+	})
+}

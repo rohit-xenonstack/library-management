@@ -66,6 +66,7 @@ function IssueRequests() {
           prev.filter((req) => req.request_id !== requestId),
         )
         setTimeout(() => setSuccess(''), 3000)
+        fetchRequests()
       } else {
         setError('Failed to approve request')
       }

@@ -91,6 +91,15 @@ func (reader *ReaderRepository) RaiseIssueRequest(ctx *gin.Context, isbn string,
 			return errors.New("book already issued to reader")
 		}
 
+		var existingRequestEvent model.RequestEvents
+		result = tx.Set("gorm:query_option", "FOR UPDATE").Model(&model.RequestEvents{}).Where("reader_id = ?", readerID).Where("book_id = ?", isbn).First(&existingRequestEvent)
+		if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return result.Error
+		}
+		if result.RowsAffected > 0 {
+			return errors.New("only one request allowed at a time")
+		}
+
 		issueRequest := model.RequestEvents{
 			ReqID:        util.RandomUUID(),
 			BookID:       isbn,
@@ -120,5 +129,14 @@ func (reader *ReaderRepository) GetLatestBookAvailability(ctx *gin.Context, isbn
 			Raw(query, isbn).
 			Scan(latestDate).
 			Error
+	})
+}
+
+func (reader *ReaderRepository) GetBooks(ctx *gin.Context, books *[]model.BookInventory) error {
+	reader.mu.Lock()
+	defer reader.mu.Unlock()
+
+	return reader.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
+		return tx.Model(&model.BookInventory{}).Find(&books).Error
 	})
 }

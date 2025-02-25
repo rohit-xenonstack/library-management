@@ -1,6 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
-import { checkAvailability, requestBook, searchBooks } from '../api/reader'
+import {
+  checkAvailability,
+  requestBook,
+  searchBooks,
+  getBooks,
+} from '../api/reader'
 import { SearchBar } from '../components/search-bar'
 import { useAuth } from '../hook/use-auth'
 import styles from '../styles/modules/reader-dashboard.module.scss'
@@ -12,7 +17,27 @@ export function ReaderDashboard() {
   const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [books, setBooks] = useState<Book[]>([])
+  const [latestBooks, setLatestBooks] = useState<Book[]>([])
   const [error, setError] = useState('')
+  const [latestBooksError, setLatestBooksError] = useState('')
+
+  useEffect(() => {
+    const fetchLatestBooks = async () => {
+      try {
+        const response = await getBooks()
+        if (response.status === 'success' && response.payload) {
+          setLatestBooks(response.payload)
+        } else {
+          setLatestBooksError('Failed to fetch latest books')
+        }
+      } catch (err) {
+        console.error(err)
+        setLatestBooksError('An error occurred while fetching latest books')
+      }
+    }
+
+    fetchLatestBooks()
+  }, [])
 
   const handleSearch = async (searchString: string, field: SearchField) => {
     setIsLoading(true)
@@ -52,6 +77,22 @@ export function ReaderDashboard() {
           ))}
         </div>
       )}
+
+      <section className={styles.latestBooksSection}>
+        <h2>Latest Added Books</h2>
+        {latestBooksError && (
+          <div className={styles.error}>{latestBooksError}</div>
+        )}
+        <div className={styles.booksGrid}>
+          {latestBooks.map((book) => (
+            <BookCard
+              key={book.isbn}
+              book={book}
+              userEmail={user?.email || ''}
+            />
+          ))}
+        </div>
+      </section>
     </div>
   )
 }

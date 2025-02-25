@@ -124,3 +124,13 @@ export const rejectRequest = async (
     })
     .json<ApiResponse>()
 }
+
+export const getLatestBooks = async (): Promise<{
+  status: string
+  message: string
+  payload?: Book[]
+}> => {
+  return api
+    .get('protected/admin/list-books')
+    .json<{ status: string; message: string; payload?: Book[] }>()
+}

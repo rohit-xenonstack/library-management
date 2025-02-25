@@ -46,14 +46,13 @@ type LoginResponse struct {
 }
 
 type RefreshPayload struct {
-	AccessToken string      `json:"access_token,omitempty"`
-	Message     string      `json:"message,omitempty"`
-	User        model.Users `json:"user,omitempty"`
+	AccessToken *string `json:"access_token,omitempty"`
+	Message     string  `json:"message" binding:"required"`
 }
 
 type RefreshTokenResponse struct {
 	Status  string         `json:"status"`
-	Payload RefreshPayload `json:"payload"`
+	Payload RefreshPayload `json:"payload" binding:"required"`
 }
 
 type AuthHandler struct {
@@ -189,28 +188,31 @@ func (auth *AuthHandler) UserSignup(ctx *gin.Context) {
 }
 
 func (auth *AuthHandler) RefreshToken(ctx *gin.Context) {
-	var response RefreshTokenResponse
+	response := RefreshTokenResponse{
+		Status: "error",
+		Payload: RefreshPayload{
+			Message:     "internal server error",
+			AccessToken: nil,
+		},
+	}
 
 	authorizationHeader := ctx.GetHeader("Authorization")
 	log.Print(authorizationHeader)
 	if len(authorizationHeader) == 0 {
-		response.Status = "error"
-		response.Payload.Message = "authorization header is missing"
+		response.Payload.Message = "authorization header not provided"
 		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
 	fields := strings.Fields(authorizationHeader)
 	if len(fields) < 2 {
-		response.Status = "error"
-		response.Payload.Message = "authorization header is invalid"
+		response.Payload.Message = "invalid authorization header format"
 		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
 	authorizationType := strings.ToLower(fields[0])
 	if authorizationType != "bearer" {
-		response.Status = "error"
 		response.Payload.Message = `unsupported authorization type, only "bearer" supported`
 		ctx.JSON(http.StatusInternalServerError, response)
 		return
@@ -221,7 +223,6 @@ func (auth *AuthHandler) RefreshToken(ctx *gin.Context) {
 
 	tokenMaker, err := token.NewJWTMaker(os.Getenv("JWT_SECRET_KEY"))
 	if err != nil {
-		response.Status = "error"
 		response.Payload.Message = err.Error()
 		ctx.JSON(http.StatusInternalServerError, response)
 		return
@@ -229,7 +230,6 @@ func (auth *AuthHandler) RefreshToken(ctx *gin.Context) {
 
 	payload, err := tokenMaker.VerifyToken(accessToken)
 	if err != nil && !errors.Is(err, token.ErrExpiredToken) {
-		response.Status = "error"
 		response.Payload.Message = err.Error()
 		ctx.JSON(http.StatusInternalServerError, response)
 		return
@@ -237,7 +237,6 @@ func (auth *AuthHandler) RefreshToken(ctx *gin.Context) {
 
 	duration, err := time.ParseDuration(os.Getenv("ACCESS_TOKEN_DURATION"))
 	if err != nil {
-		response.Status = "error"
 		response.Payload.Message = err.Error()
 		ctx.JSON(http.StatusInternalServerError, response)
 		return
@@ -246,13 +245,13 @@ func (auth *AuthHandler) RefreshToken(ctx *gin.Context) {
 	log.Print("payload", payload)
 	newAccessToken, _, err := tokenMaker.CreateToken(payload.UserID, payload.Role, duration)
 	if err != nil {
-		response.Status = "error"
 		response.Payload.Message = err.Error()
 		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
 	response.Status = "success"
-	response.Payload.AccessToken = newAccessToken
+	response.Payload.Message = "token refreshed successfully"
+	response.Payload.AccessToken = &newAccessToken
 	ctx.JSON(http.StatusOK, response)
 }

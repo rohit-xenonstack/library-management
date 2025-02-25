@@ -310,3 +310,22 @@ func (admin *AdminHandler) SearchBookByISBN(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusCreated, response)
 }
+
+func (admin *AdminHandler) GetBooks(ctx *gin.Context) {
+	books := make([]model.BookInventory, 0)
+	err := admin.AdminRepository.GetBooks(ctx, &books)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": err.Error(),
+			"payload": nil,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Books fetched successfully",
+		"payload": books,
+	})
+}

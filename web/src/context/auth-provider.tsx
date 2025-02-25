@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     checkAuth()
 
-    // Check token every 5 minutes instead of every minute
+    // Check token every 10 minutes instead of every minute
     const checkInterval = setInterval(checkAuth, 10 * 60 * 1000)
 
     return () => clearInterval(checkInterval)

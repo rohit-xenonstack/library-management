@@ -33,7 +33,7 @@ export const onboardAdmin = async (
         contact: data.adminContact,
         library_id: data.libraryId,
       },
-      throwHttpErrors: false,
+      throwHttpErrors: true,
     })
     .json<ApiResponse>()
 }
