@@ -1,9 +1,8 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { useState } from 'react'
 
 import { useAuth } from '../hook/use-auth'
-import { router } from '../lib/router'
 import styles from '../styles/modules/navbar.module.scss'
 import type { FileRouteTypes } from '../route-tree.gen'
 
@@ -44,6 +43,7 @@ const navigation: NavigationItem[] = [
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
 
   const filteredNavigation = navigation.filter(
     (item) => !item.roles || (user && item.roles.includes(user.role)),
@@ -52,11 +52,11 @@ export function Navigation() {
   const handleSignOut = () => {
     logout()
     setIsOpen(false)
-    router.navigate({ to: '/' })
+    navigate({ to: '/' })
   }
   const handleSignIn = () => {
     setIsOpen(false)
-    router.navigate({ to: '/sign-in' })
+    navigate({ to: '/sign-in' })
   }
 
   return (

@@ -1,0 +1,129 @@
+@use './variables.scss' as vars;
+
+@mixin Button {
+  width: 100%;
+  padding: 0.5rem;
+  background-color: vars.$color-gray-900;
+  color: vars.$color-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: vars.$border-radius;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: vars.$color-gray-800;
+    cursor: pointer;
+  }
+
+  &:disabled {
+    background-color: vars.$color-gray-500;
+    cursor: not-allowed;
+  }
+}
+
+@mixin FormMessage {
+  padding: 0.75rem 1rem;
+  border-radius: vars.$border-radius;
+  font-size: 0.875rem;
+  margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &.error {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: vars.$color-error;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
+  &.success {
+    background-color: rgba(34, 197, 94, 0.1);
+    color: vars.$color-success;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+  }
+}
+
+@mixin Container {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+  align-items: center;
+  background-color: vars.$color-white;
+  border-radius: vars.$border-radius;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.02),
+    0 4px 8px rgba(0, 0, 0, 0.03);
+}
+
+@mixin Title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: vars.$color-gray-900;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+@mixin Form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@mixin FormGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: vars.$color-gray-700;
+  }
+
+  input {
+    padding: 0.75rem;
+    border: 1px solid vars.$color-gray-200;
+    border-radius: vars.$border-radius;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: vars.$color-gray-900;
+    }
+
+    &:disabled {
+      background-color: vars.$color-gray-50;
+      cursor: not-allowed;
+    }
+
+    &::placeholder {
+      color: vars.$color-gray-400;
+    }
+  }
+}
+
+@mixin FieldError {
+  color: vars.$color-error;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+@mixin Loader {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  vertical-align: middle;
+}

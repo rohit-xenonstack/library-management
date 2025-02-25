@@ -12,6 +12,10 @@ function App() {
   )
 }
 
+export const RouterProviderForTest = () => {
+  return <RouterProvider router={router} />
+}
+
 function RouterProviderWithContext() {
   const auth = useAuth()
 

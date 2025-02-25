@@ -13,6 +13,12 @@ interface LoginResponsePayload {
   user?: UserDataResponse
 }
 
+export interface UserDetailsResponse {
+  status: 'success' | 'error'
+  message: string
+  payload?: UserDataResponse
+}
+
 export interface SignInResponse {
   status: 'success' | 'error'
   payload: LoginResponsePayload

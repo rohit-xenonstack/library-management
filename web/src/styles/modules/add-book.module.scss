@@ -1,8 +1,10 @@
 @use '../variables.scss' as vars;
+@use '../shared/form-message.scss' as formMessage;
+@use '../shared/button.scss' as button;
 
 .container {
   max-width: 600px;
-  margin: auto;
+  margin: 2rem auto;
   padding: 2rem;
   background-color: vars.$color-white;
   border-radius: vars.$border-radius;
@@ -56,64 +58,11 @@
 }
 
 .button {
-  padding: 0.75rem;
-  background-color: vars.$color-gray-900;
-  color: vars.$color-white;
-  border: none;
-  border-radius: vars.$border-radius;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background-color: vars.$color-gray-800;
-  }
-
-  &:disabled {
-    background-color: vars.$color-gray-500;
-    cursor: not-allowed;
-  }
-}
-
-.error {
-  padding: 0.75rem;
-  background-color: vars.$color-red-50;
-  border: 1px solid vars.$color-red-200;
-  border-radius: vars.$border-radius;
-  color: vars.$color-red-700;
-  font-size: 0.875rem;
-}
-
-.success {
-  padding: 0.75rem;
-  background-color: vars.$color-green-50;
-  border: 1px solid vars.$color-green-200;
-  border-radius: vars.$border-radius;
-  color: vars.$color-green-700;
-  font-size: 0.875rem;
+  @include button.button;
 }
 
 .formMessage {
-  padding: 0.75rem 1rem;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  margin-top: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  &.error {
-    background-color: rgba(239, 68, 68, 0.1);
-    color: vars.$color-error;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-  }
-
-  &.success {
-    background-color: rgba(34, 197, 94, 0.1);
-    color: #16a34a;
-    border: 1px solid rgba(34, 197, 94, 0.2);
-  }
+  @include formMessage.formMessage
 }
 
 @media (max-width: 768px) {

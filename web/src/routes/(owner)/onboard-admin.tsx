@@ -6,7 +6,7 @@ import { onboardAdmin } from '../../api/owner'
 import { useAuth } from '../../hook/use-auth'
 import { fallback } from '../../lib/constants'
 import { onboardAdminSchema } from '../../lib/schema'
-import styles from '../../styles/modules/onboard-admin.module.scss'
+import styles from '../../styles/form.module.scss'
 
 export const Route = createFileRoute('/(owner)/onboard-admin')({
   validateSearch: z.object({
@@ -67,11 +67,7 @@ function OnboardAdmin() {
         setError(response.payload || 'Failed to onboard admin')
       }
     } catch (err) {
-      if (err instanceof z.ZodError) {
-        setError(err.errors[0].message)
-      } else {
-        setError('Something went wrong')
-      }
+      setError('Something went wrong: ' + err)
     } finally {
       setIsLoading(false)
     }
@@ -85,69 +81,73 @@ function OnboardAdmin() {
   }
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Onboard New Admin</h1>
+    <main>
+      <div className={styles.container}>
+        <h1 className={styles.title}>Onboard New Admin</h1>
 
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.formGroup}>
-          <label htmlFor='adminName' className={styles.label}>
-            Admin Name
-          </label>
-          <input
-            type='text'
-            id='adminName'
-            name='adminName'
-            value={formData.adminName}
-            onChange={handleChange}
-            className={styles.input}
-            required
-          />
-        </div>
-
-        <div className={styles.formGroup}>
-          <label htmlFor='adminEmail' className={styles.label}>
-            Admin Email
-          </label>
-          <input
-            type='email'
-            id='adminEmail'
-            name='adminEmail'
-            value={formData.adminEmail}
-            onChange={handleChange}
-            className={styles.input}
-            required
-          />
-        </div>
-
-        <div className={styles.formGroup}>
-          <label htmlFor='adminContact' className={styles.label}>
-            Contact Number
-          </label>
-          <input
-            type='tel'
-            id='adminContact'
-            name='adminContact'
-            value={formData.adminContact}
-            onChange={handleChange}
-            className={styles.input}
-            required
-          />
-        </div>
-
-        {error && (
-          <div className={`${styles.formMessage} ${styles.error}`}>{error}</div>
-        )}
-
-        {success && (
-          <div className={`${styles.formMessage} ${styles.success}`}>
-            {success}
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.formGroup}>
+            <label htmlFor='adminName' className={styles.label}>
+              Admin Name
+            </label>
+            <input
+              type='text'
+              id='adminName'
+              name='adminName'
+              value={formData.adminName}
+              onChange={handleChange}
+              className={styles.input}
+              required
+            />
           </div>
-        )}
 
-        <button type='submit' className={styles.button} disabled={isLoading}>
-          {isLoading ? 'Onboarding...' : 'Onboard Admin'}
-        </button>
-      </form>
-    </div>
+          <div className={styles.formGroup}>
+            <label htmlFor='adminEmail' className={styles.label}>
+              Admin Email
+            </label>
+            <input
+              type='email'
+              id='adminEmail'
+              name='adminEmail'
+              value={formData.adminEmail}
+              onChange={handleChange}
+              className={styles.input}
+              required
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor='adminContact' className={styles.label}>
+              Contact Number
+            </label>
+            <input
+              type='tel'
+              id='adminContact'
+              name='adminContact'
+              value={formData.adminContact}
+              onChange={handleChange}
+              className={styles.input}
+              required
+            />
+          </div>
+
+          {error && (
+            <div className={`${styles.formMessage} ${styles.error}`}>
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className={`${styles.formMessage} ${styles.success}`}>
+              {success}
+            </div>
+          )}
+
+          <button type='submit' className={styles.button} disabled={isLoading}>
+            {isLoading ? 'Onboarding...' : 'Onboard Admin'}
+          </button>
+        </form>
+      </div>
+    </main>
   )
 }

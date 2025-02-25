@@ -3,9 +3,8 @@ import type { ReactNode } from 'react'
 
 import { AuthContext } from '../context/auth-context'
 import { ACCESS_TOKEN } from '../lib/constants'
-import { router } from '../lib/router'
-import { isTokenExpired } from '../utils/jwt'
-import type { UserDataResponse } from '../types/response'
+import type { UserDataResponse, UserDetailsResponse } from '../types/response'
+import { api } from '../api/config'
 
 const getInitialState = () => {
   const currentUser = sessionStorage.getItem('user')
@@ -31,23 +30,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      // Check if token is expired
-      if (isTokenExpired(token)) {
-        setUser(null)
-        localStorage.removeItem(ACCESS_TOKEN)
-        sessionStorage.removeItem('user')
-
-        router.navigate({
-          to: '/sign-in',
-          search: { redirect: window.location.pathname },
-        })
+      if (!user) {
+        try {
+          const response = await api
+            .get('protected/me')
+            .json<UserDetailsResponse>()
+          if (response.status === 'success' && response.payload) {
+            login(response.payload)
+          } else {
+            logout
+          }
+        } catch (err) {
+          console.error(err)
+          logout
+        }
       }
     }
 
     checkAuth()
 
     // Check token every 5 minutes instead of every minute
-    const checkInterval = setInterval(checkAuth, 5 * 60 * 1000)
+    const checkInterval = setInterval(checkAuth, 10 * 60 * 1000)
 
     return () => clearInterval(checkInterval)
   }, [])

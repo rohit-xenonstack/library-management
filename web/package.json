@@ -6,22 +6,12 @@
     "build": "vite build",
     "serve": "vite preview",
     "start": "vite",
-    "typecheck": "tsc --noEmit"
-  },
-  "jest": {
-    "testEnvironment": "jsdom",
-    "setupFilesAfterEnv": [
-      "@testing-library/jest-dom"
-    ],
-    "moduleNameMapper": {
-      "^~/(.*)$": "<rootDir>/src/$1",
-      "\\.scss$": "identity-obj-proxy"
-    }
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
   },
   "dependencies": {
     "@tanstack/react-router": "^1.57.13",
     "@tanstack/router-devtools": "^1.57.13",
-    "@vitejs/plugin-react": "^4.3.4",
     "clsx": "^2.1.1",
     "ky": "^1.7.2",
     "react": "^18.3.1",
@@ -32,17 +22,13 @@
     "@tanstack/router-plugin": "^1.57.13",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
-    "@types/jest": "^29.5.14",
     "@types/node": "^22.5.5",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react-swc": "^3.7.0",
-    "globals": "^15.9.0",
     "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
     "sass-embedded": "^1.85.0",
     "typescript": "^5.6.2",
-    "vite": "^5.4.5",
-    "vite-tsconfig-paths": "^5.0.1"
+    "vite": "^5.4.5"
   }
 }

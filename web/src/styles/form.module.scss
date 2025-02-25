@@ -1,0 +1,50 @@
+@use './variables.scss' as vars;
+@use './common.scss' as common;
+
+.container {
+  @include common.Container;
+}
+
+.form {
+  @include common.Form;
+}
+
+.title {
+  @include common.Title;
+}
+
+.formGroup {
+  @include common.FormGroup;
+}
+
+.button {
+  @include common.Button;
+}
+
+.formMessage {
+  @include common.FormMessage;
+}
+
+.error {
+  @include common.FieldError;
+}
+
+// Media Queries
+@media (max-width: 768px) {
+  .form {
+    padding: 1rem;
+  }
+  .title {
+    font-size: 1.5rem;
+  }
+}
+
+.loader {
+  @include common.Loader;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

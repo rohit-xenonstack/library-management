@@ -1,4 +1,5 @@
 @use '../variables.scss' as vars;
+@use '../common.scss' as common;
 
 .container {
   max-width: 1200px;
@@ -122,22 +123,7 @@
 }
 
 .requestStatus {
-  padding: 0.75rem;
-  border-radius: vars.$border-radius;
-  font-size: 0.875rem;
-  text-align: center;
-
-  &.success {
-    background-color: vars.$color-green-50;
-    border: 1px solid vars.$color-green-200;
-    color: vars.$color-green-700;
-  }
-
-  &.error {
-    background-color: vars.$color-red-50;
-    border: 1px solid vars.$color-red-200;
-    color: vars.$color-red-700;
-  }
+  @include common.FormMessage;
 }
 
 .error {

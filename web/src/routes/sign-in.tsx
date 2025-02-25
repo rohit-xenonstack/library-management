@@ -6,9 +6,8 @@ import type { FormEvent } from 'react'
 import { signIn } from '../api/auth'
 import { useAuth } from '../hook/use-auth'
 import { fallback } from '../lib/constants'
-// import { router } from '~/lib/router'
 import { signInFormSchema } from '../lib/schema'
-import styles from '../styles/modules/sign-in.module.scss'
+import styles from '../styles/form.module.scss'
 
 export const Route = createFileRoute('/sign-in')({
   validateSearch: z.object({
@@ -26,12 +25,12 @@ export const Route = createFileRoute('/sign-in')({
 
 function SignInComponent() {
   const { login } = useAuth()
-  // const search = Route.useSearch()
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({ email: '' })
   const [fieldError, setFieldError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
+  const [formSuccess, setFormSuccess] = useState<string | null>(null)
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -50,10 +49,16 @@ function SignInComponent() {
 
       const response = await signIn(result.data)
       if (response.status === 'success' && response.payload.user) {
+        setFormData({
+          email: '',
+        })
+        setFormSuccess('Signed in successfully. Redirecting to dashboard...')
         login(response.payload.user)
-        navigate({ to: fallback })
+        setTimeout(() => {
+          navigate({ to: fallback })
+        }, 2000)
       } else {
-        setFormError("Couldn't sign in. Please try again later.")
+        setFormError("Couldn't sign in: " + response.payload.message)
       }
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'An error occurred')
@@ -70,30 +75,39 @@ function SignInComponent() {
   }
 
   return (
-    <div className={styles.signInContainer}>
-      <div className={styles.formWrapper}>
+    <main>
+      <div className={styles.container}>
         <h1 className={styles.title}>Sign In</h1>
-        <form onSubmit={handleSubmit}>
+        <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
+            <label htmlFor='email'>Email</label>
             <input
               className={styles.input}
-              id="email"
-              type="email"
-              name="email"
-              placeholder="Enter your email"
+              id='email'
+              type='email'
+              name='email'
+              placeholder='Enter your email'
               required
               disabled={isLoading}
               onChange={handleChange}
             />
             {fieldError && <div className={styles.error}>{fieldError}</div>}
           </div>
-
-          <button className={styles.button} type="submit" disabled={isLoading}>
+          {formError && (
+            <div className={`${styles.formMessage} ${styles.error}`}>
+              {formError}
+            </div>
+          )}
+          {formSuccess && (
+            <div className={`${styles.formMessage} ${styles.success}`}>
+              {formSuccess}
+            </div>
+          )}
+          <button className={styles.button} type='submit' disabled={isLoading}>
             {isLoading ? <span className={styles.loader} /> : 'Sign In'}
           </button>
-          {formError && <div className={styles.error}>{formError}</div>}
         </form>
       </div>
-    </div>
+    </main>
   )
 }

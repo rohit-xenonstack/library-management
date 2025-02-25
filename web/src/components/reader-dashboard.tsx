@@ -22,7 +22,7 @@ export function ReaderDashboard() {
       if (response.status === 'success') {
         setBooks(response.payload)
       } else {
-        setError('Failed to fetch books')
+        setError('Failed: ' + response.payload)
       }
     } catch (err) {
       setError('An error occurred while searching books: ' + err)
@@ -99,7 +99,7 @@ function BookCard({ book, userEmail }: BookCardProps) {
         })
       } else {
         setRequestStatus({
-          message: response.payload || 'Failed to submit request',
+          message: 'Failed: ' + response.payload,
           type: 'error',
         })
       }
@@ -141,6 +141,15 @@ function BookCard({ book, userEmail }: BookCardProps) {
       </div>
 
       <div className={styles.bookActions}>
+        {requestStatus.type && (
+          <div
+            className={`${styles.requestStatus} ${
+              requestStatus.type === 'success' ? styles.success : styles.error
+            }`}
+          >
+            {requestStatus.message}
+          </div>
+        )}
         <button
           className={styles.requestButton}
           onClick={handleRequestBook}
@@ -158,16 +167,6 @@ function BookCard({ book, userEmail }: BookCardProps) {
           </button>
         )}
       </div>
-
-      {requestStatus.type && (
-        <div
-          className={`${styles.requestStatus} ${
-            requestStatus.type === 'success' ? styles.success : styles.error
-          }`}
-        >
-          {requestStatus.message}
-        </div>
-      )}
     </div>
   )
 }

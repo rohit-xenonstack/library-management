@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { addBook } from '../../api/admin'
 import { useAuth } from '../../hook/use-auth'
 import { addBookSchema } from '../../lib/schema'
-import styles from '../../styles/modules/add-book.module.scss'
+import styles from '../../styles/form.module.scss'
 
 export const Route = createFileRoute('/(admin)/add-book')({
   validateSearch: z.object({
@@ -67,7 +67,7 @@ function AddBook() {
           navigate({ to: '/' })
         }, 2000)
       } else {
-        setError(response.payload || 'Failed to add book')
+        setError('Failed: ' + response.payload)
       }
     } catch (err) {
       console.error(err)
@@ -78,85 +78,91 @@ function AddBook() {
   }
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Add New Book</h1>
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <div className={styles.formGroup}>
-          <label htmlFor='isbn'>ISBN</label>
-          <input
-            type='text'
-            id='isbn'
-            value={formData.isbn}
-            onChange={(e) => setFormData({ ...formData, isbn: e.target.value })}
-            disabled={isLoading}
-            required
-          />
-        </div>
-        <div className={styles.formGroup}>
-          <label htmlFor='title'>Title</label>
-          <input
-            type='text'
-            id='title'
-            value={formData.title}
-            onChange={(e) =>
-              setFormData({ ...formData, title: e.target.value })
-            }
-            disabled={isLoading}
-            required
-          />
-        </div>
-        <div className={styles.formGroup}>
-          <label htmlFor='authors'>Authors</label>
-          <input
-            type='text'
-            id='authors'
-            value={formData.authors}
-            onChange={(e) =>
-              setFormData({ ...formData, authors: e.target.value })
-            }
-            disabled={isLoading}
-            required
-          />
-        </div>
-        <div className={styles.formGroup}>
-          <label htmlFor='publisher'>Publisher</label>
-          <input
-            type='text'
-            id='publisher'
-            value={formData.publisher}
-            onChange={(e) =>
-              setFormData({ ...formData, publisher: e.target.value })
-            }
-            disabled={isLoading}
-            required
-          />
-        </div>
-        <div className={styles.formGroup}>
-          <label htmlFor='version'>Version</label>
-          <input
-            type='text'
-            id='version'
-            value={formData.version}
-            onChange={(e) =>
-              setFormData({ ...formData, version: e.target.value })
-            }
-            disabled={isLoading}
-            required
-          />
-        </div>
-        {error && (
-          <div className={`${styles.formMessage} ${styles.error}`}>{error}</div>
-        )}
-
-        {success && (
-          <div className={`${styles.formMessage} ${styles.success}`}>
-            {success}
+    <main>
+      <div className={styles.container}>
+        <h1 className={styles.title}>Add New Book</h1>
+        <form className={styles.form} onSubmit={handleSubmit}>
+          <div className={styles.formGroup}>
+            <label htmlFor='isbn'>ISBN</label>
+            <input
+              type='text'
+              id='isbn'
+              value={formData.isbn}
+              onChange={(e) =>
+                setFormData({ ...formData, isbn: e.target.value })
+              }
+              disabled={isLoading}
+              required
+            />
           </div>
-        )}
-        <button type='submit' className={styles.button} disabled={isLoading}>
-          {isLoading ? 'Adding Book...' : 'Add Book'}
-        </button>
-      </form>
-    </div>
+          <div className={styles.formGroup}>
+            <label htmlFor='title'>Title</label>
+            <input
+              type='text'
+              id='title'
+              value={formData.title}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
+              disabled={isLoading}
+              required
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label htmlFor='authors'>Authors</label>
+            <input
+              type='text'
+              id='authors'
+              value={formData.authors}
+              onChange={(e) =>
+                setFormData({ ...formData, authors: e.target.value })
+              }
+              disabled={isLoading}
+              required
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label htmlFor='publisher'>Publisher</label>
+            <input
+              type='text'
+              id='publisher'
+              value={formData.publisher}
+              onChange={(e) =>
+                setFormData({ ...formData, publisher: e.target.value })
+              }
+              disabled={isLoading}
+              required
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label htmlFor='version'>Version</label>
+            <input
+              type='text'
+              id='version'
+              value={formData.version}
+              onChange={(e) =>
+                setFormData({ ...formData, version: e.target.value })
+              }
+              disabled={isLoading}
+              required
+            />
+          </div>
+          {error && (
+            <div className={`${styles.formMessage} ${styles.error}`}>
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className={`${styles.formMessage} ${styles.success}`}>
+              {success}
+            </div>
+          )}
+          <button type='submit' className={styles.button} disabled={isLoading}>
+            {isLoading ? 'Adding Book...' : 'Add Book'}
+          </button>
+        </form>
+      </div>
+    </main>
   )
 }

@@ -1,58 +1,20 @@
 @use '../variables.scss' as vars;
+@use '../common.scss' as common;
 
 .container {
-  max-width: 600px;
-  margin: auto;
-  padding: 2rem;
-  background-color: vars.$color-white;
-  border-radius: vars.$border-radius;
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.02),
-    0 4px 8px rgba(0, 0, 0, 0.03);
+  @include common.Container;
 }
 
 .title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: vars.$color-gray-900;
-  margin-bottom: 2rem;
-  text-align: center;
+  @include common.Title;
 }
 
 .form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  @include common.Form;
 }
 
 .formGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-
-  label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: vars.$color-gray-700;
-  }
-
-  input {
-    padding: 0.75rem;
-    border: 1px solid vars.$color-gray-200;
-    border-radius: vars.$border-radius;
-    font-size: 1rem;
-    transition: border-color 0.2s ease;
-
-    &:focus {
-      outline: none;
-      border-color: vars.$color-gray-900;
-    }
-
-    &:disabled {
-      background-color: vars.$color-gray-50;
-      cursor: not-allowed;
-    }
-  }
+  @include common.FormGroup;
 }
 
 .actions {
@@ -104,22 +66,8 @@
   }
 }
 
-.error {
-  padding: 0.75rem;
-  background-color: vars.$color-red-50;
-  border: 1px solid vars.$color-red-200;
-  border-radius: vars.$border-radius;
-  color: vars.$color-red-700;
-  font-size: 0.875rem;
-}
-
-.success {
-  padding: 0.75rem;
-  background-color: vars.$color-green-50;
-  border: 1px solid vars.$color-green-200;
-  border-radius: vars.$border-radius;
-  color: vars.$color-green-700;
-  font-size: 0.875rem;
+.formMessage {
+  @include common.FormMessage;
 }
 
 .loading {

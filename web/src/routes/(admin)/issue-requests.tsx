@@ -2,7 +2,11 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { z } from 'zod'
 
-import { approveRequest, getIssueRequests, rejectRequest } from '../../api/admin'
+import {
+  approveRequest,
+  getIssueRequests,
+  rejectRequest,
+} from '../../api/admin'
 import { useAuth } from '../../hook/use-auth'
 import styles from '../../styles/modules/issue-requests.module.scss'
 import type { IssueRequest } from '../../api/admin'
@@ -43,10 +47,10 @@ function IssueRequests() {
       if (response.status === 'success') {
         setRequests(response.payload)
       } else {
-        setError('Failed to fetch requests')
+        setError('Error: ' + response.payload)
       }
     } catch (err) {
-      setError('An error occurred while fetching requests: ' + err)
+      setError('Error: ' + err)
     } finally {
       setIsLoading(false)
     }

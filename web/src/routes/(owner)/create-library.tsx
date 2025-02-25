@@ -6,7 +6,7 @@ import type { FormEvent } from 'react'
 import { createLibrary } from '../../api/owner'
 import { fallback } from '../../lib/constants'
 import { createLibrarySchema } from '../../lib/schema'
-import styles from '../../styles/modules/create-library.module.scss'
+import styles from '../../styles/form.module.scss'
 import type { CreateLibraryData } from '../../lib/schema'
 
 export const Route = createFileRoute('/(owner)/create-library')({
@@ -88,100 +88,102 @@ function CreateLibrary() {
   }
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Create Library</h1>
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.formGroup}>
-          <label htmlFor='library_name' className={styles.label}>
-            Library Name
-          </label>
-          <input
-            id='library_name'
-            name='libraryName'
-            type='text'
-            className={styles.input}
-            value={formData.libraryName}
-            onChange={handleChange}
-            disabled={isLoading}
-            required
-          />
-          {errors.libraryName && (
-            <div className={styles.error}>{errors.libraryName}</div>
-          )}
-        </div>
-
-        <div className={styles.formGroup}>
-          <label htmlFor='name' className={styles.label}>
-            Owner Name
-          </label>
-          <input
-            id='name'
-            name='ownerName'
-            type='text'
-            className={styles.input}
-            value={formData.ownerName}
-            onChange={handleChange}
-            disabled={isLoading}
-            required
-          />
-          {errors.ownerName && (
-            <div className={styles.error}>{errors.ownerName}</div>
-          )}
-        </div>
-
-        <div className={styles.formGroup}>
-          <label htmlFor='email' className={styles.label}>
-            Owner Email
-          </label>
-          <input
-            id='email'
-            name='ownerEmail'
-            type='email'
-            className={styles.input}
-            value={formData.ownerEmail}
-            onChange={handleChange}
-            disabled={isLoading}
-            required
-          />
-          {errors.ownerEmail && (
-            <div className={styles.error}>{errors.ownerEmail}</div>
-          )}
-        </div>
-
-        <div className={styles.formGroup}>
-          <label htmlFor='contact' className={styles.label}>
-            Owner Contact Number
-          </label>
-          <input
-            id='contact'
-            name='ownerContact'
-            type='tel'
-            className={styles.input}
-            value={formData.ownerContact}
-            onChange={handleChange}
-            disabled={isLoading}
-            required
-          />
-          {errors.ownerContact && (
-            <div className={styles.error}>{errors.ownerContact}</div>
-          )}
-        </div>
-
-        {formError && (
-          <div className={`${styles.formMessage} ${styles.error}`}>
-            {formError}
+    <main>
+      <div className={styles.container}>
+        <h1 className={styles.title}>Create Library</h1>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.formGroup}>
+            <label htmlFor='library_name' className={styles.label}>
+              Library Name
+            </label>
+            <input
+              id='library_name'
+              name='libraryName'
+              type='text'
+              className={styles.input}
+              value={formData.libraryName}
+              onChange={handleChange}
+              disabled={isLoading}
+              required
+            />
+            {errors.libraryName && (
+              <div className={styles.error}>{errors.libraryName}</div>
+            )}
           </div>
-        )}
-        {formSuccess && (
-          <div className={`${styles.formMessage} ${styles.success}`}>
-            {formSuccess}
-          </div>
-        )}
 
-        <button type='submit' className={styles.button} disabled={isLoading}>
-          {isLoading ? 'Creating...' : 'Create Library'}
-        </button>
-      </form>
-    </div>
+          <div className={styles.formGroup}>
+            <label htmlFor='name' className={styles.label}>
+              Owner Name
+            </label>
+            <input
+              id='name'
+              name='ownerName'
+              type='text'
+              className={styles.input}
+              value={formData.ownerName}
+              onChange={handleChange}
+              disabled={isLoading}
+              required
+            />
+            {errors.ownerName && (
+              <div className={styles.error}>{errors.ownerName}</div>
+            )}
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor='email' className={styles.label}>
+              Owner Email
+            </label>
+            <input
+              id='email'
+              name='ownerEmail'
+              type='email'
+              className={styles.input}
+              value={formData.ownerEmail}
+              onChange={handleChange}
+              disabled={isLoading}
+              required
+            />
+            {errors.ownerEmail && (
+              <div className={styles.error}>{errors.ownerEmail}</div>
+            )}
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor='contact' className={styles.label}>
+              Owner Contact Number
+            </label>
+            <input
+              id='contact'
+              name='ownerContact'
+              type='tel'
+              className={styles.input}
+              value={formData.ownerContact}
+              onChange={handleChange}
+              disabled={isLoading}
+              required
+            />
+            {errors.ownerContact && (
+              <div className={styles.error}>{errors.ownerContact}</div>
+            )}
+          </div>
+
+          {formError && (
+            <div className={`${styles.formMessage} ${styles.error}`}>
+              {formError}
+            </div>
+          )}
+          {formSuccess && (
+            <div className={`${styles.formMessage} ${styles.success}`}>
+              {formSuccess}
+            </div>
+          )}
+
+          <button type='submit' className={styles.button} disabled={isLoading}>
+            {isLoading ? 'Creating...' : 'Create Library'}
+          </button>
+        </form>
+      </div>
+    </main>
   )
 }
