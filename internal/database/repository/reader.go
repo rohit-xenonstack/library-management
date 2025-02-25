@@ -55,7 +55,7 @@ func (reader *ReaderRepository) SearchBookByPublisher(ctx *gin.Context, publishe
 	})
 }
 
-func (reader *ReaderRepository) RaiseIssueRequest(ctx *gin.Context, isbn string, email string) error {
+func (reader *ReaderRepository) RaiseIssueRequest(ctx *gin.Context, isbn string, email string, readerID string) error {
 	reader.mu.Lock()
 	defer reader.mu.Unlock()
 
@@ -80,6 +80,15 @@ func (reader *ReaderRepository) RaiseIssueRequest(ctx *gin.Context, isbn string,
 
 		if existingBook.AvailableCopies < 1 {
 			return errors.New("no books available to issue")
+		}
+
+		var existingIssueRequest model.IssueRegistry
+		result = tx.Set("gorm:query_option", "FOR UPDATE").Model(&model.IssueRegistry{}).Where("reader_id = ?", readerID).Where("book_id = ?", isbn).Where("issue_status = ?", "open").First(&existingIssueRequest)
+		if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return result.Error
+		}
+		if result.RowsAffected > 0 {
+			return errors.New("book already issued to reader")
 		}
 
 		issueRequest := model.RequestEvents{

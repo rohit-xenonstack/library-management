@@ -4,6 +4,7 @@ import (
 	"errors"
 	"library-management/backend/internal/api/model"
 	"library-management/backend/internal/database/repository"
+	"library-management/backend/internal/util/token"
 	"log"
 	"net/http"
 
@@ -151,10 +152,22 @@ func (admin *AdminHandler) UpdateBook(ctx *gin.Context) {
 
 func (admin *AdminHandler) ListIssueRequests(ctx *gin.Context) {
 	issueRequests := make([]repository.IssueRequestDetails, 0)
-	err := admin.AdminRepository.ListIssueRequests(ctx, &issueRequests)
+
+	sessionPayload, ok := ctx.Get("session_payload")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"payload": "session not found",
+		})
+		return
+	}
+	log.Print(sessionPayload)
+	userID := sessionPayload.(*token.Payload).UserID
+	log.Print(userID)
+	err := admin.AdminRepository.ListIssueRequests(ctx, &issueRequests, userID)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"payload": err.Error(),
 		})

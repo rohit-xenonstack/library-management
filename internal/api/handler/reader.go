@@ -4,6 +4,7 @@ import (
 	"errors"
 	"library-management/backend/internal/api/model"
 	"library-management/backend/internal/database/repository"
+	"library-management/backend/internal/util/token"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -100,7 +101,17 @@ func (reader *ReaderHandler) RaiseIssueRequest(ctx *gin.Context) {
 		return
 	}
 
-	err := reader.ReaderRepository.RaiseIssueRequest(ctx, raiseIssueRequest.BookID, raiseIssueRequest.ReaderEmail)
+	sessionPayload, ok := ctx.Get("session_payload")
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"payload": "session not found",
+		})
+		return
+	}
+
+	userID := sessionPayload.(*token.Payload).UserID
+	err := reader.ReaderRepository.RaiseIssueRequest(ctx, raiseIssueRequest.BookID, raiseIssueRequest.ReaderEmail, userID)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",

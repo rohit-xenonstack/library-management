@@ -6,6 +6,7 @@ import (
 	"library-management/backend/internal/api/model"
 	"library-management/backend/internal/database/transaction"
 	"library-management/backend/internal/util"
+	"log"
 	"sync"
 	"time"
 
@@ -120,33 +121,25 @@ func (admin *AdminRepository) UpdateBook(ctx context.Context, isbn string, title
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return errors.New("book with supplied ISBN not found in database")
 		}
-
-		// updateFields := UpdateFields{
-		// 	Title:     title,
-		// 	Authors:   authors,
-		// 	Publisher: publisher,
-		// 	Version:   version,
-		// }
-
 		query := `update book_inventories set title = ?, authors = ?, publisher = ?, version = ? where isbn = ?`
 		return tx.Exec(query, title, authors, publisher, version, isbn).Error
 	})
 }
 
-func (admin *AdminRepository) ListIssueRequests(ctx context.Context, requestDetails *[]IssueRequestDetails) error {
+func (admin *AdminRepository) ListIssueRequests(ctx context.Context, requestDetails *[]IssueRequestDetails, adminID string) error {
 	admin.mu.Lock()
 	defer admin.mu.Unlock()
 
 	return admin.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
-		query := `
-            SELECT
-                r.*,
-                b.title as book_title,
-                b.available_copies
-            FROM request_events r
-            JOIN book_inventories b ON r.book_id = b.isbn
-            WHERE r.approver_id IS NULL
-        `
+		var admin model.Users
+		result := tx.Set("gorm:query_option", "FOR UPDATE").Where("id = ?", adminID).First(&admin)
+		if result.Error != nil {
+			return result.Error
+		}
+		lib_id := admin.LibID
+		log.Print(lib_id)
+		query := `SELECT r.*, b.title as book_title, b.available_copies FROM request_events r, book_inventories b
+              WHERE r.book_id = b.isbn AND r.approver_id IS NULL AND b.lib_id = '` + *lib_id + `'`
 		return tx.Set("gorm:query_option", "FOR SHARE").
 			Raw(query).
 			Scan(requestDetails).

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"fmt"
 	"library-management/backend/internal/api/middleware"
 	"library-management/backend/internal/api/model"
 	"library-management/backend/internal/database/repository"
@@ -131,23 +130,37 @@ func (auth *AuthHandler) UserDetails(ctx *gin.Context) {
 	session, exists := ctx.Get(middleware.AuthorizationPayloadKey)
 	sessionPayload := session.(*token.Payload)
 	if !exists {
-		err := fmt.Errorf("session not found in current context")
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		err := "session not found in current context"
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": err,
+			"payload": nil,
+		})
 		return
 	}
 	user, err := auth.AuthRepository.UserDetails(ctx, sessionPayload.UserID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": err.Error(),
+			"payload": nil,
+		})
 		return
 	}
-	ctx.JSON(http.StatusOK, user)
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "user details fetched successfully",
+		"payload": user,
+	})
 }
 
 func (auth *AuthHandler) UserSignup(ctx *gin.Context) {
 	var userSignupRequest UserSignupRequest
 
 	if err := ctx.ShouldBindJSON(&userSignupRequest); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request parameters"})
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"payload": err.Error()})
 		return
 	}
 
@@ -162,7 +175,9 @@ func (auth *AuthHandler) UserSignup(ctx *gin.Context) {
 
 	err := auth.AuthRepository.UserSignup(ctx, newUser)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"payload": err.Error()})
 		return
 	}
 
@@ -179,31 +194,25 @@ func (auth *AuthHandler) RefreshToken(ctx *gin.Context) {
 	authorizationHeader := ctx.GetHeader("Authorization")
 	log.Print(authorizationHeader)
 	if len(authorizationHeader) == 0 {
-		err := errors.New("authorization header is missing")
-		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"status":  "error",
-			"payload": err.Error(),
-		})
+		response.Status = "error"
+		response.Payload.Message = "authorization header is missing"
+		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
 	fields := strings.Fields(authorizationHeader)
 	if len(fields) < 2 {
-		err := errors.New("authorization header is invalid")
-		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"status":  "error",
-			"payload": err.Error(),
-		})
+		response.Status = "error"
+		response.Payload.Message = "authorization header is invalid"
+		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
 	authorizationType := strings.ToLower(fields[0])
 	if authorizationType != "bearer" {
-		err := fmt.Errorf("unsupported authorization type %s", authorizationType)
-		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"status":  "error",
-			"payload": err.Error(),
-		})
+		response.Status = "error"
+		response.Payload.Message = `unsupported authorization type, only "bearer" supported`
+		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
 

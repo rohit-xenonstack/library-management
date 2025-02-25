@@ -149,7 +149,7 @@ func (s *AdminRepositoryTestSuite) TestListIssueRequests() {
 
 	s.mock.ExpectCommit()
 
-	err := s.admin.ListIssueRequests(s.ctx, &requests)
+	err := s.admin.ListIssueRequests(s.ctx, &requests, "admin123")
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), 1, len(requests))
 }
