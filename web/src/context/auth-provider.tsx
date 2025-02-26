@@ -36,7 +36,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const response = await api
             .get('protected/me')
             .json<UserDetailsResponse>()
-          console.log(response)
           if (response.status === 'success' && response.user) {
             login(response.user)
           } else {

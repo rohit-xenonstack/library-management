@@ -5,6 +5,7 @@ import Card from '../components/card'
 import { useAuth } from '../hook/use-auth'
 import styles from '../styles/modules/owner-dashboard.module.scss'
 import { ROLE } from '../lib/constants'
+import { HTTPError } from 'ky'
 
 interface Library {
   library_id: string
