@@ -5,6 +5,8 @@ import { z } from 'zod'
 import { getBook, updateBook } from '../../api/admin'
 import styles from '../../styles/modules/update-book.module.scss'
 import type { BookData } from '../../types/data'
+import { DASHBOARD, LOGIN_PAGE } from '../../lib/constants'
+import { HTTPError } from 'ky'
 
 export const Route = createFileRoute('/(admin)/$isbn/update')({
   validateSearch: z.object({
@@ -13,12 +15,12 @@ export const Route = createFileRoute('/(admin)/$isbn/update')({
   beforeLoad: ({ context }) => {
     if (!context.auth.user) {
       throw redirect({
-        to: '/sign-in',
+        to: LOGIN_PAGE,
       })
     }
     if (context.auth.user.role !== 'admin') {
       throw redirect({
-        to: '/',
+        to: DASHBOARD,
       })
     }
   },
@@ -53,8 +55,12 @@ function UpdateBook() {
           })
         }
       } catch (err) {
-        console.error(err)
-        setError('Failed to fetch book details')
+        if (err instanceof HTTPError) {
+          const res = await err.response.json()
+          setError('Failed: ' + res.message)
+        } else {
+          setError('something went wrong, please again try later')
+        }
       }
     }
     fetchBook()
@@ -71,18 +77,18 @@ function UpdateBook() {
         isbn,
         ...formData,
       })
-
       if (response.status === 'success') {
         setSuccess('Book updated successfully!')
         setTimeout(() => {
           navigate({ to: '/' })
         }, 2000)
-      } else {
-        setError('Failed: ' + response.message)
       }
     } catch (err) {
-      console.error(err)
-      setError('An error occurred while updating the book')
+      setError(
+        err instanceof HTTPError
+          ? 'Failed: ' + (await err.response.json()).message
+          : 'something went wrong, please again try later',
+      )
     } finally {
       setIsLoading(false)
     }

@@ -6,6 +6,8 @@ import { addBook } from '../../api/admin'
 import { useAuth } from '../../hook/use-auth'
 import { addBookSchema } from '../../lib/schema'
 import styles from '../../styles/form.module.scss'
+import { DASHBOARD, LOGIN_PAGE } from '../../lib/constants'
+import { HTTPError } from 'ky'
 
 export const Route = createFileRoute('/(admin)/add-book')({
   validateSearch: z.object({
@@ -14,12 +16,12 @@ export const Route = createFileRoute('/(admin)/add-book')({
   beforeLoad: ({ context }) => {
     if (!context.auth.user) {
       throw redirect({
-        to: '/sign-in',
+        to: LOGIN_PAGE,
       })
     }
     if (context.auth.user && context.auth.user.role !== 'admin') {
       throw redirect({
-        to: '/',
+        to: DASHBOARD,
       })
     }
   },
@@ -51,9 +53,7 @@ function AddBook() {
         ...formData,
         email: user?.email as string,
       })
-
       const response = await addBook(validatedData)
-
       if (response.status === 'success') {
         setSuccess('Book added successfully!')
         setFormData({
@@ -66,12 +66,13 @@ function AddBook() {
         setTimeout(() => {
           navigate({ to: '/' })
         }, 2000)
-      } else {
-        setError('Failed: ' + response.message)
       }
     } catch (err) {
-      console.error(err)
-      setError('Please check the form fields')
+      setError(
+        err instanceof HTTPError
+          ? 'Failed: ' + (await err.response.json()).message
+          : 'something went wrong, please again try later',
+      )
     } finally {
       setIsLoading(false)
     }

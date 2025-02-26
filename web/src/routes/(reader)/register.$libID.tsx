@@ -3,8 +3,9 @@ import { useState } from 'react'
 import { z } from 'zod'
 
 import { readerRegister } from '../../api/auth'
-import { fallback } from '../../lib/constants'
 import styles from '../../styles/form.module.scss'
+import { DASHBOARD } from '../../lib/constants'
+import { HTTPError } from 'ky'
 
 export const Route = createFileRoute('/(reader)/register/$libID')({
   validateSearch: z.object({
@@ -13,7 +14,7 @@ export const Route = createFileRoute('/(reader)/register/$libID')({
   beforeLoad: ({ context, search }) => {
     if (context.auth.user) {
       throw redirect({
-        to: search.redirect || fallback,
+        to: search.redirect || DASHBOARD,
       })
     }
   },
@@ -59,12 +60,13 @@ function RegisterReader() {
         setTimeout(() => {
           navigate({ to: '/sign-in' })
         }, 2000)
-      } else {
-        setFormError('Registration failed: ' + response.message)
       }
     } catch (err) {
-      console.error(err)
-      setFormError('An error occurred during registration')
+      setFormError(
+        err instanceof HTTPError
+          ? 'Failed: ' + (await err.response.json()).message
+          : 'something went wrong, please again try later',
+      )
     } finally {
       setIsLoading(false)
     }

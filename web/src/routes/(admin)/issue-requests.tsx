@@ -9,7 +9,9 @@ import {
 } from '../../api/admin'
 import { useAuth } from '../../hook/use-auth'
 import styles from '../../styles/modules/issue-requests.module.scss'
-import type { IssueRequest } from '../../api/admin'
+import { DASHBOARD, LOGIN_PAGE } from '../../lib/constants'
+import { IssueRequestData } from '../../types/data'
+import { HTTPError } from 'ky'
 
 export const Route = createFileRoute('/(admin)/issue-requests')({
   validateSearch: z.object({
@@ -18,12 +20,12 @@ export const Route = createFileRoute('/(admin)/issue-requests')({
   beforeLoad: ({ context }) => {
     if (!context.auth.user) {
       throw redirect({
-        to: '/sign-in',
+        to: LOGIN_PAGE,
       })
     }
     if (context.auth.user.role !== 'admin') {
       throw redirect({
-        to: '/',
+        to: DASHBOARD,
       })
     }
   },
@@ -33,7 +35,7 @@ export const Route = createFileRoute('/(admin)/issue-requests')({
 function IssueRequests() {
   const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
-  const [requests, setRequests] = useState<IssueRequest[]>([])
+  const [requests, setRequests] = useState<IssueRequestData[]>([])
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
@@ -45,21 +47,28 @@ function IssueRequests() {
     try {
       const response = await getIssueRequests()
       if (response.status === 'success') {
-        setRequests(response.payload)
-      } else {
-        setError('Error: ' + response.payload)
+        setRequests(response.requests || [])
       }
     } catch (err) {
-      setError('Error: ' + err)
+      setError(
+        err instanceof HTTPError
+          ? 'Failed: ' + (await err.response.json()).message
+          : 'something went wrong, please again try later',
+      )
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleApprove = async (requestId: string) => {
-    if (!user?.user_id) return
+    if (!user?.user_id) {
+      return
+    }
     try {
-      const response = await approveRequest(requestId, user.user_id)
+      const response = await approveRequest({
+        request_id: requestId,
+        user_id: user.user_id,
+      })
       if (response.status === 'success') {
         setSuccess('Request approved successfully')
         setRequests((prev) =>
@@ -67,29 +76,36 @@ function IssueRequests() {
         )
         setTimeout(() => setSuccess(''), 3000)
         fetchRequests()
-      } else {
-        setError('Failed to approve request')
       }
     } catch (err) {
-      setError('An error occurred while approving request: ' + err)
+      setError(
+        err instanceof HTTPError
+          ? 'Failed: ' + (await err.response.json()).message
+          : 'something went wrong, please again try later',
+      )
     }
   }
 
   const handleReject = async (requestId: string) => {
     if (!user?.user_id) return
     try {
-      const response = await rejectRequest(requestId, user.user_id)
+      const response = await rejectRequest({
+        request_id: requestId,
+        user_id: user.user_id,
+      })
       if (response.status === 'success') {
         setSuccess('Request rejected successfully')
         setRequests((prev) =>
           prev.filter((req) => req.request_id !== requestId),
         )
         setTimeout(() => setSuccess(''), 3000)
-      } else {
-        setError('Failed to reject request')
       }
     } catch (err) {
-      setError('An error occurred while rejecting request: ' + err)
+      setError(
+        err instanceof HTTPError
+          ? 'Failed: ' + (await err.response.json()).message
+          : 'something went wrong, please again try later',
+      )
     }
   }
 
@@ -123,7 +139,7 @@ function IssueRequests() {
 }
 
 interface RequestCardProps {
-  request: IssueRequest
+  request: IssueRequestData
   onApprove: () => void
   onReject: () => void
 }

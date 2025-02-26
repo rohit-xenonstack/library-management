@@ -1,23 +1,19 @@
 import { useState, useEffect } from 'react'
 
-import {
-  checkAvailability,
-  requestBook,
-  searchBooks,
-  getBooks,
-} from '../api/reader'
+import { checkAvailability, requestBook } from '../api/reader'
 import { SearchBar } from '../components/search-bar'
 import { useAuth } from '../hook/use-auth'
 import styles from '../styles/modules/reader-dashboard.module.scss'
-import type { Book } from '../api/admin'
-
-type SearchField = 'title' | 'authors' | 'publisher'
+import { BookData } from '../types/data'
+import { getBooks, searchBooks } from '../api/shared'
+import { SearchBookRequest } from '../types/request'
+import { HTTPError } from 'ky'
 
 export function ReaderDashboard() {
   const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
-  const [books, setBooks] = useState<Book[]>([])
-  const [latestBooks, setLatestBooks] = useState<Book[]>([])
+  const [books, setBooks] = useState<BookData[]>([])
+  const [latestBooks, setLatestBooks] = useState<BookData[]>([])
   const [error, setError] = useState('')
   const [latestBooksError, setLatestBooksError] = useState('')
 
@@ -25,32 +21,35 @@ export function ReaderDashboard() {
     const fetchLatestBooks = async () => {
       try {
         const response = await getBooks()
-        if (response.status === 'success' && response.payload) {
-          setLatestBooks(response.payload)
-        } else {
-          setLatestBooksError('Failed to fetch latest books')
+        if (response.status === 'success') {
+          setLatestBooks(response.books || [])
         }
       } catch (err) {
-        console.error(err)
-        setLatestBooksError('An error occurred while fetching latest books')
+        setLatestBooksError(
+          err instanceof HTTPError
+            ? 'Failed: ' + (await err.response.json()).message
+            : 'something went wrong, please again try later',
+        )
       }
     }
 
     fetchLatestBooks()
   }, [])
 
-  const handleSearch = async (searchString: string, field: SearchField) => {
+  const handleSearch = async (data: SearchBookRequest) => {
     setIsLoading(true)
     setError('')
     try {
-      const response = await searchBooks(searchString, field)
+      const response = await searchBooks(data)
       if (response.status === 'success') {
-        setBooks(response.payload)
-      } else {
-        setError('Failed: ' + response.payload)
+        setBooks(response.books || [])
       }
     } catch (err) {
-      setError('An error occurred while searching books: ' + err)
+      setError(
+        err instanceof HTTPError
+          ? 'Failed: ' + (await err.response.json()).message
+          : 'something went wrong, please again try later',
+      )
     } finally {
       setIsLoading(false)
     }
@@ -98,7 +97,7 @@ export function ReaderDashboard() {
 }
 
 interface BookCardProps {
-  book: Book
+  book: BookData
   userEmail: string
 }
 
@@ -116,11 +115,14 @@ function BookCard({ book, userEmail }: BookCardProps) {
     try {
       const response = await checkAvailability(book.isbn)
       if (response.status === 'success') {
-        setAvailableDate(response.payload)
+        setAvailableDate(response.date || '')
       }
     } catch (err) {
       setRequestStatus({
-        message: 'Failed to check availability: ' + err,
+        message:
+          err instanceof HTTPError
+            ? 'Failed: ' + (await err.response.json()).message
+            : 'something went wrong, please again try later',
         type: 'error',
       })
     } finally {
@@ -132,21 +134,19 @@ function BookCard({ book, userEmail }: BookCardProps) {
     if (!userEmail) return
     setIsRequesting(true)
     try {
-      const response = await requestBook(book.isbn, userEmail)
+      const response = await requestBook({ isbn: book.isbn, email: userEmail })
       if (response.status === 'success') {
         setRequestStatus({
           message: 'Book request submitted successfully!',
           type: 'success',
         })
-      } else {
-        setRequestStatus({
-          message: 'Failed: ' + response.payload,
-          type: 'error',
-        })
       }
     } catch (err) {
       setRequestStatus({
-        message: 'An error occurred while requesting the book: ' + err,
+        message:
+          err instanceof HTTPError
+            ? 'Failed: ' + (await err.response.json()).message
+            : 'something went wrong, please again try later',
         type: 'error',
       })
     } finally {

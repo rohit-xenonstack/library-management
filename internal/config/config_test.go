@@ -20,8 +20,6 @@ func TestParseFlag(t *testing.T) {
 	assert.NoError(t, err)
 	err = os.Setenv("ACCESS_TOKEN_DURATION", sampleEnv.JWT.AccessTokenDuration.String())
 	assert.NoError(t, err)
-	err = os.Setenv("REFRESH_TOKEN_DURATION", sampleEnv.JWT.RefreshTokenDuration.String())
-	assert.NoError(t, err)
 
 	cfg := *NewConfig()
 	err = cfg.ParseFlag()
@@ -32,5 +30,4 @@ func TestParseFlag(t *testing.T) {
 	assert.Equal(t, sampleEnv.DB.DSN, cfg.DB.DSN)
 	assert.Equal(t, sampleEnv.JWT.SecretKey, cfg.JWT.SecretKey)
 	assert.Equal(t, sampleEnv.JWT.AccessTokenDuration, cfg.JWT.AccessTokenDuration)
-	assert.Equal(t, sampleEnv.JWT.RefreshTokenDuration, cfg.JWT.RefreshTokenDuration)
 }

@@ -1,55 +1,54 @@
 import { useState, useEffect } from 'react'
 import { Link } from '@tanstack/react-router'
-import { decreaseBookCount, searchBooks, getLatestBooks } from '../api/admin'
+import { decreaseBookCount } from '../api/admin'
 import { SearchBar } from '../components/search-bar'
 import styles from '../styles/modules/admin-dashboard.module.scss'
 import type { BookData } from '../types/data'
+import { getBooks, searchBooks } from '../api/shared'
+import { SearchBookRequest } from '../types/request'
+import { HTTPError } from 'ky'
 
 export function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(false)
   const [books, setBooks] = useState<BookData[]>([])
   const [latestBooks, setLatestBooks] = useState<BookData[]>([])
   const [error, setError] = useState('')
+  const [bookCardError, setBookCardError] = useState('')
   const [latestBooksError, setLatestBooksError] = useState('')
 
   useEffect(() => {
     const fetchLatestBooks = async () => {
       try {
-        const response = await getLatestBooks()
+        const response = await getBooks()
         if (response.status === 'success') {
           setLatestBooks(response.books || [])
-        } else {
-          setLatestBooksError('Failed to fetch latest books')
         }
       } catch (err) {
-        console.error(err)
-        setLatestBooksError('An error occurred while fetching latest books')
+        setLatestBooksError(
+          err instanceof HTTPError
+            ? 'Failed: ' + (await err.response.json()).message
+            : 'something went wrong, please again try later',
+        )
       }
     }
 
     fetchLatestBooks()
   }, [])
 
-  const handleSearch = async (
-    searchString: string,
-    field: 'title' | 'authors' | 'publisher',
-  ) => {
+  const handleSearch = async (data: SearchBookRequest) => {
     setIsLoading(true)
     setError('')
     try {
-      console.log(searchString, field)
-      const response = await searchBooks({
-        search_string: searchString,
-        field: field,
-      })
+      const response = await searchBooks(data)
       if (response.status === 'success') {
         setBooks(response.books || [])
-      } else {
-        setError('Failed to fetch books')
       }
     } catch (err) {
-      console.error(err)
-      setError('An error occurred while searching books')
+      setError(
+        err instanceof HTTPError
+          ? 'Failed: ' + (await err.response.json()).message
+          : 'something went wrong, please again try later',
+      )
     } finally {
       setIsLoading(false)
     }
@@ -81,12 +80,14 @@ export function AdminDashboard() {
               : latestBook,
           ),
         )
-      } else {
-        setError('Failed to decrease book count')
       }
     } catch (err) {
-      console.error(err)
-      setError('An error occurred while updating book count')
+      setBookCardError(
+        err instanceof HTTPError
+          ? 'Failed: ' + (await err.response.json()).message
+          : 'something went wrong, please again try later',
+      )
+      setTimeout(() => setBookCardError(''), 3000)
     }
   }
 
@@ -107,6 +108,7 @@ export function AdminDashboard() {
               key={book.isbn}
               book={book}
               onDecreaseCount={() => handleDecreaseCount(book.isbn)}
+              bookCardError={bookCardError}
             />
           ))}
         </div>
@@ -123,6 +125,7 @@ export function AdminDashboard() {
               key={book.isbn}
               book={book}
               onDecreaseCount={() => handleDecreaseCount(book.isbn)}
+              bookCardError={bookCardError}
             />
           ))}
         </div>
@@ -134,9 +137,10 @@ export function AdminDashboard() {
 interface BookCardProps {
   book: BookData
   onDecreaseCount: () => void
+  bookCardError: string
 }
 
-function BookCard({ book, onDecreaseCount }: BookCardProps) {
+function BookCard({ book, onDecreaseCount, bookCardError }: BookCardProps) {
   return (
     <div className={styles.bookCard}>
       <div className={styles.bookInfo}>
@@ -157,6 +161,7 @@ function BookCard({ book, onDecreaseCount }: BookCardProps) {
           <span>Available:</span> {book.available_copies} of {book.total_copies}
         </p>
       </div>
+      {bookCardError && <div className={styles.error}>{bookCardError}</div>}
       <div className={styles.bookActions}>
         <Link
           to='/$isbn/update'

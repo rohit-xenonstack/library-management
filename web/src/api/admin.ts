@@ -1,37 +1,23 @@
 import { api } from './config'
 import type { AddBookData } from '../lib/schema'
 import {
-  GetBooksResponse,
   IssueRequestResponse,
   RequiredResponse,
   SearchBookByISBNResponse,
-  SearchBooksResponse,
 } from '../types/response'
 import { UpdateBookData } from '../types/data'
 import {
   ApproveRequest,
   RejectRequest,
   RemoveBookRequest,
-  SearchBookRequest,
 } from '../types/request'
 
-export const addBook = async (data: AddBookData): Promise<RequiredResponse> => {
-  return api
+export async function addBook(data: AddBookData): Promise<RequiredResponse> {
+  return await api
     .post(`protected/admin/add-book`, {
       json: data,
-      throwHttpErrors: false,
     })
     .json<RequiredResponse>()
-}
-
-export const searchBooks = async (
-  data: SearchBookRequest,
-): Promise<SearchBooksResponse> => {
-  return api
-    .post('protected/book', {
-      json: data,
-    })
-    .json<SearchBooksResponse>()
 }
 
 export const decreaseBookCount = async (
@@ -67,7 +53,7 @@ export const getIssueRequests = async (): Promise<IssueRequestResponse> => {
 export const approveRequest = async (
   data: ApproveRequest,
 ): Promise<RequiredResponse> => {
-  return api
+  return await api
     .post('protected/admin/approve-issue-request', {
       json: data,
     })
@@ -82,8 +68,4 @@ export const rejectRequest = async (
       json: data,
     })
     .json<RequiredResponse>()
-}
-
-export const getLatestBooks = async (): Promise<GetBooksResponse> => {
-  return api.get('protected/books').json<GetBooksResponse>()
 }

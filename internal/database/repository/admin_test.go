@@ -51,7 +51,7 @@ func TestAdminRepositorySuite(t *testing.T) {
 }
 
 func (s *AdminRepositoryTestSuite) TestAddBook() {
-	book := &model.BookInventory{
+	book := model.BookInventory{
 		ISBN:            "1234567890",
 		Title:           "Test Book",
 		Authors:         "Test Author",
@@ -78,7 +78,7 @@ func (s *AdminRepositoryTestSuite) TestAddBook() {
 
 	s.mock.ExpectCommit()
 
-	err := s.admin.AddBook(s.ctx, book, "admin@test.com")
+	err := s.admin.AddBook(s.ctx, &book, "admin@test.com")
 	assert.NoError(s.T(), err)
 }
 

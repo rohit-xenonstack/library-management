@@ -28,7 +28,6 @@ export const beforeRequest: BeforeRequestHook = async (request) => {
     }
 
     token = data.access_token
-    console.log('Access token refreshed:', token)
     localStorage.setItem(ACCESS_TOKEN, token)
   }
   request.headers.set('Authorization', `Bearer ${token}`)

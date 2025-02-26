@@ -1,19 +1,12 @@
 import { api } from './config'
 import { ACCESS_TOKEN } from '../lib/constants'
 import type { RegisterReaderRequest, SignInRequest } from '../types/request'
-import type {
-  // RefreshAccessTokenResponse,
-  RequiredResponse,
-  SignInResponse,
-} from '../types/response'
-
-// const baseApiUrl = import.meta.env.VITE_BASE_API_URL
+import type { RequiredResponse, SignInResponse } from '../types/response'
 
 export async function signIn(data: SignInRequest): Promise<SignInResponse> {
   const response = await api
     .post(`auth/login`, {
       json: data,
-      throwHttpErrors: false,
     })
     .json<SignInResponse>()
 
@@ -26,23 +19,16 @@ export async function signIn(data: SignInRequest): Promise<SignInResponse> {
 export async function readerRegister(
   data: RegisterReaderRequest,
 ): Promise<RequiredResponse> {
-  try {
-    const response = await api
-      .post('auth/register', {
-        json: {
-          name: data.name,
-          email: data.email,
-          contact: data.contact,
-          library_id: data.library_id,
-        },
-      })
-      .json<RequiredResponse>()
+  const response = await api
+    .post('auth/register', {
+      json: {
+        name: data.name,
+        email: data.email,
+        contact: data.contact,
+        library_id: data.library_id,
+      },
+    })
+    .json<RequiredResponse>()
 
-    return response
-  } catch (error) {
-    return {
-      status: 'error',
-      message: "Couldn't sign in: " + error,
-    }
-  }
+  return response
 }

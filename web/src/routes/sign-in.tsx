@@ -5,9 +5,10 @@ import type { FormEvent } from 'react'
 
 import { signIn } from '../api/auth'
 import { useAuth } from '../hook/use-auth'
-import { fallback } from '../lib/constants'
+import { DASHBOARD } from '../lib/constants'
 import { signInFormSchema } from '../lib/schema'
 import styles from '../styles/form.module.scss'
+import { HTTPError } from 'ky'
 
 export const Route = createFileRoute('/sign-in')({
   validateSearch: z.object({
@@ -16,7 +17,7 @@ export const Route = createFileRoute('/sign-in')({
   beforeLoad: ({ context, search }) => {
     if (context.auth.user) {
       throw redirect({
-        to: search.redirect || fallback,
+        to: search.redirect || DASHBOARD,
       })
     }
   },
@@ -48,22 +49,26 @@ function SignInComponent() {
       }
 
       const response = await signIn(result.data)
-      console.log(response)
-      if (response.status === 'success' && response.access_token) {
+      if (
+        response.status === 'success' &&
+        response.access_token &&
+        response.user
+      ) {
         setFormData({
           email: '',
         })
-        setFormSuccess(response.message)
-        console.log(response)
+        setFormSuccess('Login Successful: Redirecting to dashboard...')
         login(response.user)
         setTimeout(() => {
-          navigate({ to: fallback })
+          navigate({ to: DASHBOARD })
         }, 2000)
-      } else {
-        setFormError("Couldn't sign in: " + response.message)
       }
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'An error occurred')
+      setFormError(
+        err instanceof HTTPError
+          ? 'Failed: ' + (await err.response.json()).message
+          : 'something went wrong, please again try later',
+      )
     } finally {
       setIsLoading(false)
     }

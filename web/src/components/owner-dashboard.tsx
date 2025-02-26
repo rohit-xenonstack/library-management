@@ -4,6 +4,7 @@ import { api } from '../api/config'
 import Card from '../components/card'
 import { useAuth } from '../hook/use-auth'
 import styles from '../styles/modules/owner-dashboard.module.scss'
+import { ROLE } from '../lib/constants'
 
 interface Library {
   library_id: string
@@ -18,7 +19,7 @@ interface Admin {
   name: string
   email: string
   contact: string
-  role: 'admin'
+  role: ROLE.ADMIN
   library_id: string
 }
 
@@ -53,10 +54,12 @@ export function OwnerDashboard() {
 
         setLibraries(librariesRes.libraries)
         setAdmins(adminsRes.admins)
-        console.log(librariesRes.libraries)
-        console.log(adminsRes.admins)
       } catch (err) {
-        setError(`Failed to fetch dashboard data: ${err}`)
+        setError(
+          err instanceof HTTPError
+            ? 'Failed: ' + (await err.response.json()).message
+            : 'something went wrong, please again try later',
+        )
       } finally {
         setIsLoading(false)
       }

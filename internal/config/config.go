@@ -23,9 +23,8 @@ type DbConfig struct {
 	DSN string
 }
 type JWTConfig struct {
-	SecretKey            string
-	AccessTokenDuration  time.Duration
-	RefreshTokenDuration time.Duration
+	SecretKey           string
+	AccessTokenDuration time.Duration
 }
 
 func NewConfig() *Config {

@@ -33,3 +33,7 @@ export interface IssueRequestResponse extends RequiredResponse {
 export interface GetBooksResponse extends RequiredResponse {
   books?: BookData[]
 }
+
+export interface CheckAvailabilityResponse extends RequiredResponse {
+  date?: string
+}

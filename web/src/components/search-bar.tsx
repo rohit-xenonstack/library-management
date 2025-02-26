@@ -1,11 +1,12 @@
 import { useState } from 'react'
 
 import styles from '../styles/modules/search-bar.module.scss'
+import { SearchBookRequest } from '../types/request'
 
 type SearchField = 'title' | 'authors' | 'publisher'
 
 interface SearchBarProps {
-  onSearch: (searchString: string, field: SearchField) => void
+  onSearch: (data: SearchBookRequest) => void
   isLoading?: boolean
 }
 
@@ -16,7 +17,7 @@ export function SearchBar({ onSearch, isLoading = false }: SearchBarProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchString.trim()) {
-      onSearch(searchString.trim(), searchField)
+      onSearch({ search_string: searchString.trim(), field: searchField })
     }
   }
 

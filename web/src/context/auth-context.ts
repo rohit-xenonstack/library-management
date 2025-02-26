@@ -1,10 +1,9 @@
 import { createContext } from 'react'
-
-import type { UserDataResponse } from '../types/response'
+import { UserData } from '../types/data'
 
 export interface AuthContextType {
-  user: UserDataResponse | null
-  login: (user: UserDataResponse) => void
+  user: UserData | null
+  login: (user: UserData) => void
   logout: () => void
 }
 

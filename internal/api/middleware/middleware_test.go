@@ -3,7 +3,6 @@ package middleware_test
 import (
 	"fmt"
 	"library-management/backend/internal/api"
-	"library-management/backend/internal/api/handler"
 	"library-management/backend/internal/api/middleware"
 	"library-management/backend/internal/config"
 	"library-management/backend/internal/util"
@@ -14,9 +13,33 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
+
+func setupTestDB(t *testing.T) (*gorm.DB, sqlmock.Sqlmock, error) {
+	t.Helper()
+
+	sqlDB, mock, err := sqlmock.New()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	dialector := postgres.New(postgres.Config{
+		Conn:       sqlDB,
+		DriverName: "postgres",
+	})
+
+	db, err := gorm.Open(dialector, &gorm.Config{})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return db, mock, nil
+}
 
 func addAuthorization(
 	t *testing.T,
@@ -90,8 +113,10 @@ func TestAuthMiddleware(t *testing.T) {
 		},
 	}
 
+	db, _, err := setupTestDB(t)
+	assert.NoError(t, err)
 	cfg := &config.SampleEnv
-	h := handler.NewHandler(nil, nil, nil, nil, nil)
+	h := config.SampleEnv.InitHandler(config.SampleEnv.InitRepository(db))
 
 	for i := range testCases {
 		tc := testCases[i]
@@ -100,7 +125,7 @@ func TestAuthMiddleware(t *testing.T) {
 			api := api.NewAPI(cfg, h)
 
 			authPath := "/auth/login"
-			api.Router.GET(
+			api.Router.POST(
 				authPath,
 				middleware.JWTAuth(),
 				func(ctx *gin.Context) {

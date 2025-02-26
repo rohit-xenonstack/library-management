@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useAuth } from '../hook/use-auth'
 import styles from '../styles/modules/navbar.module.scss'
 import type { FileRouteTypes } from '../routeTree.gen'
+import { DASHBOARD, LOGIN_PAGE, ROLE } from '../lib/constants'
 
 type NavigationItem = {
   to: FileRouteTypes['to']
@@ -16,27 +17,27 @@ const navigation: NavigationItem[] = [
   {
     to: '/',
     name: 'Dashboard',
-    roles: ['reader', 'admin', 'owner'],
+    roles: [ROLE.READER, ROLE.ADMIN, ROLE.OWNER],
   },
   {
     to: '/add-book',
     name: `Add Book`,
-    roles: ['admin'],
+    roles: [ROLE.ADMIN],
   },
   {
     to: '/issue-requests',
     name: 'Issue Requests',
-    roles: ['admin'],
+    roles: [ROLE.ADMIN],
   },
   {
     to: '/onboard-admin',
     name: `Onboard Admin`,
-    roles: ['owner'],
+    roles: [ROLE.OWNER],
   },
   {
     to: '/create-library',
     name: 'Create Library',
-    roles: ['owner'],
+    roles: [ROLE.OWNER],
   },
 ]
 
@@ -52,11 +53,11 @@ export function Navigation() {
   const handleSignOut = () => {
     logout()
     setIsOpen(false)
-    navigate({ to: '/' })
+    navigate({ to: DASHBOARD })
   }
   const handleSignIn = () => {
     setIsOpen(false)
-    navigate({ to: '/sign-in' })
+    navigate({ to: LOGIN_PAGE })
   }
 
   return (

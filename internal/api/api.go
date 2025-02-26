@@ -95,9 +95,7 @@ func (api *API) SetupRouter() {
 			readerRoutes.Use(middleware.RequirePrivilege(util.ReaderRole))
 			{
 				readerRoutes.GET("/latest/:isbn", api.Handler.ReaderHandler.GetLatestAvailability)
-				readerRoutes.POST("/books", api.Handler.ReaderHandler.SearchBook)
 				readerRoutes.POST("/request-issue", api.Handler.ReaderHandler.RaiseIssueRequest)
-				readerRoutes.GET("/get-books", api.Handler.ReaderHandler.GetLatestBooks)
 			}
 		}
 	}

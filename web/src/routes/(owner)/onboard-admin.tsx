@@ -4,9 +4,10 @@ import { z } from 'zod'
 
 import { onboardAdmin } from '../../api/owner'
 import { useAuth } from '../../hook/use-auth'
-import { fallback } from '../../lib/constants'
 import { onboardAdminSchema } from '../../types/data'
 import styles from '../../styles/form.module.scss'
+import { DASHBOARD, LOGIN_PAGE, ROLE } from '../../lib/constants'
+import { HTTPError } from 'ky'
 
 export const Route = createFileRoute('/(owner)/onboard-admin')({
   validateSearch: z.object({
@@ -15,12 +16,12 @@ export const Route = createFileRoute('/(owner)/onboard-admin')({
   beforeLoad: ({ context }) => {
     if (!context.auth.user) {
       throw redirect({
-        to: '/sign-in',
+        to: LOGIN_PAGE,
       })
     }
-    if (context.auth.user && context.auth.user.role !== 'owner') {
+    if (context.auth.user && context.auth.user.role !== ROLE.OWNER) {
       throw redirect({
-        to: fallback,
+        to: DASHBOARD,
       })
     }
   },
@@ -63,11 +64,13 @@ function OnboardAdmin() {
         setTimeout(() => {
           navigate({ to: '/' })
         }, 2000)
-      } else {
-        setError('Failed: ' + response.message)
       }
     } catch (err) {
-      setError('Something went wrong: ' + err)
+      setError(
+        err instanceof HTTPError
+          ? 'Failed: ' + (await err.response.json()).message
+          : 'something went wrong, please again try later',
+      )
     } finally {
       setIsLoading(false)
     }

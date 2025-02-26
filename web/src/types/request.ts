@@ -31,3 +31,8 @@ export interface SearchBookRequest {
 export interface RemoveBookRequest {
   isbn: string
 }
+
+export interface RequestBookRequest {
+  isbn: string
+  email: string
+}

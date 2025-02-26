@@ -1,29 +1,22 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import { z } from 'zod'
 import type { FormEvent } from 'react'
 
 import { createLibrary } from '../../api/owner'
-import { fallback } from '../../lib/constants'
+import { DASHBOARD, LOGIN_PAGE, ROLE } from '../../lib/constants'
 import styles from '../../styles/form.module.scss'
 import {
   CreateLibraryWithOwnerData,
   createLibraryWithOwnerSchema,
 } from '../../types/data'
+import { useAuth } from '../../hook/use-auth'
+import { HTTPError } from 'ky'
 
 export const Route = createFileRoute('/(owner)/create-library')({
-  validateSearch: z.object({
-    redirect: z.string().optional().catch(''),
-  }),
-  beforeLoad: ({ context, search }) => {
-    if (!context.auth.user) {
+  beforeLoad({ context }) {
+    if (context.auth.user && context.auth.user.role !== ROLE.OWNER) {
       throw redirect({
-        to: '/sign-in',
-      })
-    }
-    if (context.auth.user && context.auth.user.role !== 'owner') {
-      throw redirect({
-        to: search.redirect || fallback,
+        to: DASHBOARD,
       })
     }
   },
@@ -31,6 +24,7 @@ export const Route = createFileRoute('/(owner)/create-library')({
 })
 
 function CreateLibrary() {
+  const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState<CreateLibraryWithOwnerData>({
     library_name: '',
@@ -70,14 +64,25 @@ function CreateLibrary() {
           email: '',
           contact: '',
         })
-        setTimeout(() => {
-          navigate({ to: '/' })
-        }, 2000)
-      } else {
-        setFormError('Failed: ' + response.message)
+        if (!user) {
+          setFormSuccess(
+            'Library created successfully: Redirecting to Login...',
+          )
+          setTimeout(() => {
+            navigate({ to: LOGIN_PAGE })
+          }, 2000)
+        } else {
+          setTimeout(() => {
+            navigate({ to: DASHBOARD })
+          }, 2000)
+        }
       }
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'An error occurred')
+      setFormError(
+        err instanceof HTTPError
+          ? 'Failed: ' + (await err.response.json()).message
+          : 'something went wrong, please again try later',
+      )
     } finally {
       setIsLoading(false)
     }

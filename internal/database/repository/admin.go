@@ -51,13 +51,14 @@ func (admin *AdminRepository) AddBook(ctx context.Context, book *model.BookInven
 		}
 
 		book.LibID = user.LibID
+		log.Println(book)
+
 		var existingBook model.BookInventory
 		result = tx.Set("gorm:query_option", "FOR UPDATE").Where("isbn = ?", book.ISBN).First(&existingBook)
 		if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return result.Error
 		}
 
-		log.Print(*existingBook.LibID, *user.LibID)
 		if result.RowsAffected > 0 {
 			if *existingBook.LibID != *user.LibID {
 				return errors.New("book with same ISBN already exists in another library")
@@ -65,6 +66,7 @@ func (admin *AdminRepository) AddBook(ctx context.Context, book *model.BookInven
 			return tx.Model(&model.BookInventory{}).Where("isbn = ?", existingBook.ISBN).Update("total_copies", existingBook.TotalCopies+1).Update("available_copies", existingBook.AvailableCopies+1).Error
 		}
 
+		log.Print(*book)
 		return tx.Create(book).Error
 	})
 }

@@ -13,5 +13,4 @@ export const api = ky.create({
     limit: 0,
   },
   credentials: 'include',
-  throwHttpErrors: false,
 })
