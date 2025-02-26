@@ -2,7 +2,7 @@ import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { z } from 'zod'
 
-import { registerReader } from '../../api/auth'
+import { readerRegister } from '../../api/auth'
 import { fallback } from '../../lib/constants'
 import styles from '../../styles/form.module.scss'
 
@@ -49,7 +49,7 @@ function RegisterReader() {
     setFormSuccess('')
 
     try {
-      const response = await registerReader({
+      const response = await readerRegister({
         ...formData,
         library_id: libID,
       })
@@ -60,7 +60,7 @@ function RegisterReader() {
           navigate({ to: '/sign-in' })
         }, 2000)
       } else {
-        setFormError('Registration failed: ' + response.payload)
+        setFormError('Registration failed: ' + response.message)
       }
     } catch (err) {
       console.error(err)

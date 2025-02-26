@@ -48,17 +48,19 @@ function SignInComponent() {
       }
 
       const response = await signIn(result.data)
-      if (response.status === 'success' && response.payload.user) {
+      console.log(response)
+      if (response.status === 'success' && response.access_token) {
         setFormData({
           email: '',
         })
-        setFormSuccess('Signed in successfully. Redirecting to dashboard...')
-        login(response.payload.user)
+        setFormSuccess(response.message)
+        console.log(response)
+        login(response.user)
         setTimeout(() => {
           navigate({ to: fallback })
         }, 2000)
       } else {
-        setFormError("Couldn't sign in: " + response.payload.message)
+        setFormError("Couldn't sign in: " + response.message)
       }
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'An error occurred')

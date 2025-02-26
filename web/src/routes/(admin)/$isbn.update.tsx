@@ -4,7 +4,7 @@ import { z } from 'zod'
 
 import { getBook, updateBook } from '../../api/admin'
 import styles from '../../styles/modules/update-book.module.scss'
-import type { Book } from '../../api/admin'
+import type { BookData } from '../../types/data'
 
 export const Route = createFileRoute('/(admin)/$isbn/update')({
   validateSearch: z.object({
@@ -31,7 +31,7 @@ function UpdateBook() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [book, setBook] = useState<Book | null>(null)
+  const [book, setBook] = useState<BookData | null>(null)
   const [formData, setFormData] = useState({
     title: '',
     authors: '',
@@ -43,14 +43,13 @@ function UpdateBook() {
     const fetchBook = async () => {
       try {
         const response = await getBook(isbn)
-        if (response.status === 'success') {
-          setBook(response.payload)
-          console.log(response.payload)
+        if (response.status === 'success' && response.book) {
+          setBook(response.book)
           setFormData({
-            title: response.payload.title,
-            authors: response.payload.authors,
-            publisher: response.payload.publisher,
-            version: response.payload.version,
+            title: response.book.title,
+            authors: response.book.authors,
+            publisher: response.book.publisher,
+            version: response.book.version,
           })
         }
       } catch (err) {
@@ -79,7 +78,7 @@ function UpdateBook() {
           navigate({ to: '/' })
         }, 2000)
       } else {
-        setError('Failed: ' + response.payload)
+        setError('Failed: ' + response.message)
       }
     } catch (err) {
       console.error(err)

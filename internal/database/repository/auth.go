@@ -12,6 +12,8 @@ import (
 
 type AuthRepositoryInterface interface {
 	Login(context.Context, string) (*model.Users, error)
+	UserDetails(context.Context, string) (*model.Users, error)
+	UserSignup(context.Context, model.Users) error
 }
 
 type AuthRepository struct {
@@ -27,40 +29,26 @@ func NewAuthRepository(db *gorm.DB, txManager *transaction.TxManager) *AuthRepos
 	}
 }
 
-func (auth *AuthRepository) Login(ctx context.Context, email string) (*model.Users, error) {
+func (auth *AuthRepository) Login(ctx context.Context, email string, user *model.Users) error {
 	auth.mu.RLock()
 	defer auth.mu.RUnlock()
 
-	var user model.Users
-	err := auth.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
+	return auth.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
 		return tx.Set("gorm:query_option", "FOR SHARE").
 			Where("email = ?", email).
 			First(&user).Error
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &user, nil
 }
 
-func (auth *AuthRepository) UserDetails(ctx context.Context, userID string) (*model.Users, error) {
+func (auth *AuthRepository) UserDetails(ctx context.Context, userID string, user *model.Users) error {
 	auth.mu.RLock()
 	defer auth.mu.RUnlock()
 
-	var user model.Users
-	err := auth.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
+	return auth.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
 		return tx.Set("gorm:query_option", "FOR SHARE").
 			Where("ID = ?", userID).
 			First(&user).Error
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &user, nil
 }
 
 func (auth *AuthRepository) UserSignup(ctx context.Context, user model.Users) error {

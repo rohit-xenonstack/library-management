@@ -41,17 +41,12 @@ func (cfg *Config) ParseFlag() error {
 	if err != nil {
 		return err
 	}
-	flag.DurationVar(&cfg.JWT.AccessTokenDuration, "jwt-access-token-duration", duration, "Access Token Lifetime")
-	// duration, err = time.ParseDuration(os.Getenv("REFRESH_TOKEN_DURATION"))
-	// if err != nil {
-	// 	return err
-	// }
-	// flag.DurationVar(&cfg.JWT.RefreshTokenDuration, "jwt-refresh-token-duration", duration, "Refresh Token Lifetime")
+	flag.DurationVar(&cfg.JWT.AccessTokenDuration, "jwt-access-token-duration", duration, "Access Token Duration")
 	return nil
 }
 
 func (cfg *Config) InitHandler(r *repository.Repository) *handler.Handler {
-	return handler.NewHandler(r.AuthRepository, r.OwnerRepository, r.AdminRepository, r.ReaderRepository)
+	return handler.NewHandler(r.AuthRepository, r.OwnerRepository, r.AdminRepository, r.ReaderRepository, r.SharedRepository)
 }
 
 func (cfg *Config) InitRepository(db *gorm.DB) *repository.Repository {

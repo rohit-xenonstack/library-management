@@ -91,7 +91,7 @@ func TestAuthMiddleware(t *testing.T) {
 	}
 
 	cfg := &config.SampleEnv
-	h := handler.NewHandler(nil, nil, nil, nil)
+	h := handler.NewHandler(nil, nil, nil, nil, nil)
 
 	for i := range testCases {
 		tc := testCases[i]

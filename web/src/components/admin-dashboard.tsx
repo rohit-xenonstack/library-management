@@ -3,12 +3,12 @@ import { Link } from '@tanstack/react-router'
 import { decreaseBookCount, searchBooks, getLatestBooks } from '../api/admin'
 import { SearchBar } from '../components/search-bar'
 import styles from '../styles/modules/admin-dashboard.module.scss'
-import type { Book } from '../api/admin'
+import type { BookData } from '../types/data'
 
 export function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(false)
-  const [books, setBooks] = useState<Book[]>([])
-  const [latestBooks, setLatestBooks] = useState<Book[]>([])
+  const [books, setBooks] = useState<BookData[]>([])
+  const [latestBooks, setLatestBooks] = useState<BookData[]>([])
   const [error, setError] = useState('')
   const [latestBooksError, setLatestBooksError] = useState('')
 
@@ -16,8 +16,8 @@ export function AdminDashboard() {
     const fetchLatestBooks = async () => {
       try {
         const response = await getLatestBooks()
-        if (response.status === 'success' && response.payload) {
-          setLatestBooks(response.payload)
+        if (response.status === 'success') {
+          setLatestBooks(response.books || [])
         } else {
           setLatestBooksError('Failed to fetch latest books')
         }
@@ -38,9 +38,12 @@ export function AdminDashboard() {
     setError('')
     try {
       console.log(searchString, field)
-      const response = await searchBooks(searchString, field)
+      const response = await searchBooks({
+        search_string: searchString,
+        field: field,
+      })
       if (response.status === 'success') {
-        setBooks(response.payload)
+        setBooks(response.books || [])
       } else {
         setError('Failed to fetch books')
       }
@@ -54,7 +57,7 @@ export function AdminDashboard() {
 
   const handleDecreaseCount = async (isbn: string) => {
     try {
-      const response = await decreaseBookCount(isbn)
+      const response = await decreaseBookCount({ isbn: isbn })
       if (response.status === 'success') {
         setBooks((prevBooks) =>
           prevBooks.map((book) =>
@@ -129,7 +132,7 @@ export function AdminDashboard() {
 }
 
 interface BookCardProps {
-  book: Book
+  book: BookData
   onDecreaseCount: () => void
 }
 

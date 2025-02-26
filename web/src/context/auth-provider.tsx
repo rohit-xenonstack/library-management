@@ -3,7 +3,8 @@ import type { ReactNode } from 'react'
 
 import { AuthContext } from '../context/auth-context'
 import { ACCESS_TOKEN } from '../lib/constants'
-import type { UserDataResponse, UserDetailsResponse } from '../types/response'
+import type { UserDetailsResponse } from '../types/response'
+import type { UserData } from '../types/data'
 import { api } from '../api/config'
 
 const getInitialState = () => {
@@ -12,9 +13,9 @@ const getInitialState = () => {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserDataResponse | null>(getInitialState)
+  const [user, setUser] = useState<UserData | null>(getInitialState)
 
-  const login = useCallback((userData: UserDataResponse) => {
+  const login = useCallback((userData: UserData) => {
     setUser(userData)
   }, [])
 
@@ -35,8 +36,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const response = await api
             .get('protected/me')
             .json<UserDetailsResponse>()
-          if (response.status === 'success' && response.payload) {
-            login(response.payload)
+          console.log(response)
+          if (response.status === 'success' && response.user) {
+            login(response.user)
           } else {
             logout
           }

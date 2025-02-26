@@ -83,7 +83,8 @@ func TestAuthRepository_Login_Success_WithAllFields(t *testing.T) {
 		WillReturnRows(rows)
 	mock.ExpectCommit()
 
-	user, err := repo.Login(ctx, email)
+	var user model.Users
+	err = repo.Login(ctx, email, &user)
 	assert.NoError(t, err)
 	assert.NotNil(t, user)
 	assert.Equal(t, expectedUser.ID, user.ID)
@@ -126,7 +127,8 @@ func TestAuthRepository_Login_Success_WithoutLibrary(t *testing.T) {
 		WillReturnRows(rows)
 	mock.ExpectCommit()
 
-	user, err := repo.Login(ctx, email)
+	var user model.Users
+	err = repo.Login(ctx, email, &user)
 	assert.NoError(t, err)
 	assert.NotNil(t, user)
 	assert.Equal(t, expectedUser.ID, user.ID)
@@ -153,7 +155,8 @@ func TestAuthRepository_Login_DBError(t *testing.T) {
 		WillReturnError(sql.ErrConnDone)
 	mock.ExpectRollback()
 
-	user, err := repo.Login(ctx, email)
+	var user *model.Users
+	err = repo.Login(ctx, email, user)
 	assert.Error(t, err)
 	assert.Nil(t, user)
 	assert.Equal(t, sql.ErrConnDone, err)
@@ -171,7 +174,8 @@ func TestAuthRepository_Login_TransactionError(t *testing.T) {
 	// Expect failed transaction begin
 	mock.ExpectBegin().WillReturnError(sql.ErrConnDone)
 
-	user, err := repo.Login(ctx, email)
+	var user *model.Users
+	err = repo.Login(ctx, email, user)
 	assert.Error(t, err)
 	assert.Nil(t, user)
 	assert.Equal(t, sql.ErrConnDone, err)

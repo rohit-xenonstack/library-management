@@ -11,7 +11,7 @@ type Users struct {
 	Email         string   `gorm:"unique" json:"email" binding:"required"`
 	ContactNumber string   `gorm:"" json:"contact" binding:"required"`
 	Role          string   `gorm:"" json:"role" binding:"required"`
-	Library       *Library `gorm:"foreignKey:LibID;references:ID" json:"-"`
+	Library       *Library `gorm:"foreignKey:LibID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 	LibID         *string  `gorm:"" json:"library_id"`
 }
 
@@ -61,4 +61,18 @@ type LibraryDetails struct {
 	OwnerName  string `json:"owner_name"`
 	OwnerEmail string `json:"owner_email"`
 	TotalBooks int    `json:"total_books"`
+}
+
+type UpdateFields struct {
+	Title     string `gorm:"column:title"`
+	Authors   string `gorm:"column:authors"`
+	Publisher string `gorm:"column:publisher"`
+	Version   string `gorm:"column:version"`
+}
+
+type IssueRequestDetails struct {
+	RequestEvents
+	BookTitle       string `json:"book_title" binding:"required"`
+	AvailableCopies int    `json:"available_copies" binding:"required"`
+	ReaderName      string `json:"reader_name" binding:"required"`
 }

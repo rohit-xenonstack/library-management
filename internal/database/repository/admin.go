@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -18,9 +17,9 @@ type AdminRepositoryInterface interface {
 	AddBook(*context.Context, *model.BookInventory, string) error
 	RemoveBook(*context.Context, string) error
 	UpdateBook(*context.Context, *model.BookInventory) error
-	ListIssueRequest(*context.Context) (*[]model.BookInventory, error)
+	ListIssueRequests(*context.Context) (*[]model.BookInventory, error)
 	ApproveIssueRequest(*context.Context, string) error
-	DenyIssueRequest(*context.Context, string) error
+	RejectIssueRequest(*context.Context, string) error
 }
 
 type AdminRepository struct {
@@ -34,19 +33,6 @@ func NewAdminRepository(db *gorm.DB, txManager *transaction.TxManager) *AdminRep
 		db:        db,
 		txManager: txManager,
 	}
-}
-
-type UpdateFields struct {
-	Title     string `gorm:"column:title"`
-	Authors   string `gorm:"column:authors"`
-	Publisher string `gorm:"column:publisher"`
-	Version   string `gorm:"column:version"`
-}
-
-type IssueRequestDetails struct {
-	model.RequestEvents
-	BookTitle       string `json:"book_title"`
-	AvailableCopies int    `json:"available_copies"`
 }
 
 func (admin *AdminRepository) AddBook(ctx context.Context, book *model.BookInventory, email string) error {
@@ -66,31 +52,42 @@ func (admin *AdminRepository) AddBook(ctx context.Context, book *model.BookInven
 
 		book.LibID = user.LibID
 		var existingBook model.BookInventory
-		result = tx.Set("gorm:query_option", "FOR UPDATE").
-			Where("isbn = ?", book.ISBN).
-			First(&existingBook)
+		result = tx.Set("gorm:query_option", "FOR UPDATE").Where("isbn = ?", book.ISBN).First(&existingBook)
+		if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return result.Error
+		}
 
+		log.Print(*existingBook.LibID, *user.LibID)
 		if result.RowsAffected > 0 {
-			return tx.Model(&model.BookInventory{}).
-				Where("isbn = ?", existingBook.ISBN).
-				Update("total_copies", existingBook.TotalCopies+1).
-				Update("available_copies", existingBook.AvailableCopies+1).Error
+			if *existingBook.LibID != *user.LibID {
+				return errors.New("book with same ISBN already exists in another library")
+			}
+			return tx.Model(&model.BookInventory{}).Where("isbn = ?", existingBook.ISBN).Update("total_copies", existingBook.TotalCopies+1).Update("available_copies", existingBook.AvailableCopies+1).Error
 		}
 
 		return tx.Create(book).Error
 	})
 }
 
-func (admin *AdminRepository) RemoveBook(ctx context.Context, isbn string) error {
+func (admin *AdminRepository) RemoveBook(ctx context.Context, isbn string, userID string) error {
 	admin.mu.Lock()
 	defer admin.mu.Unlock()
 
 	return admin.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
-		var existingBook model.BookInventory
-		result := tx.Set("gorm:query_option", "FOR UPDATE").Where("isbn = ?", isbn).First(&existingBook)
+		var user model.Users
+		result := tx.Set("gorm:query_option", "FOR UPDATE").Where("id = ?", userID).First(&user)
+		if result.Error != nil {
+			return result.Error
+		}
 
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return errors.New("book with supplied ISBN not found in database")
+		var existingBook model.BookInventory
+		result = tx.Set("gorm:query_option", "FOR UPDATE").Where("isbn = ?", isbn).Where("lib_id = ?", user.LibID).First(&existingBook)
+
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				return errors.New("book with supplied ISBN not found in database")
+			}
+			return result.Error
 		}
 
 		if (existingBook.AvailableCopies == 1) && (existingBook.TotalCopies == 1) {
@@ -110,23 +107,32 @@ func (admin *AdminRepository) RemoveBook(ctx context.Context, isbn string) error
 	})
 }
 
-func (admin *AdminRepository) UpdateBook(ctx context.Context, isbn string, title, authors, publisher, version string) error {
+func (admin *AdminRepository) UpdateBook(ctx context.Context, isbn string, title, authors, publisher, version, userID string) error {
 	admin.mu.Lock()
 	defer admin.mu.Unlock()
 
 	return admin.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
-		var existingBook model.BookInventory
-		result := tx.Set("gorm:query_option", "FOR UPDATE").Where("isbn = ?", isbn).First(&existingBook)
-
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return errors.New("book with supplied ISBN not found in database")
+		var user model.Users
+		result := tx.Set("gorm:query_option", "FOR UPDATE").Where("id = ?", userID).First(&user)
+		if result.Error != nil {
+			return result.Error
 		}
+
+		var existingBook model.BookInventory
+		result = tx.Set("gorm:query_option", "FOR UPDATE").Where("isbn = ?", isbn).Where("lib_id = ?", user.LibID).First(&existingBook)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				return errors.New("book with supplied ISBN not found in database")
+			}
+			return result.Error
+		}
+
 		query := `update book_inventories set title = ?, authors = ?, publisher = ?, version = ? where isbn = ?`
 		return tx.Exec(query, title, authors, publisher, version, isbn).Error
 	})
 }
 
-func (admin *AdminRepository) ListIssueRequests(ctx context.Context, requestDetails *[]IssueRequestDetails, adminID string) error {
+func (admin *AdminRepository) ListIssueRequests(ctx context.Context, requestDetails *[]model.IssueRequestDetails, adminID string) error {
 	admin.mu.Lock()
 	defer admin.mu.Unlock()
 
@@ -205,58 +211,13 @@ func (admin *AdminRepository) RejectIssueRequest(ctx context.Context, requestID 
 		var existingIssueRequest model.RequestEvents
 		result := tx.Set("gorm:query_option", "FOR UPDATE").Where("req_id = ?", requestID).First(&existingIssueRequest)
 
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return errors.New("invalid Issue Request ID")
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				return errors.New("invalid Issue Request ID")
+			}
+			return result.Error
 		}
 
 		return tx.Model(&model.RequestEvents{}).Where("req_id = ?", requestID).Delete(&existingIssueRequest).Error
-	})
-}
-
-func (admin *AdminRepository) SearchBookByTitle(ctx *gin.Context, title string, books *[]model.BookInventory) error {
-	admin.mu.Lock()
-	defer admin.mu.Unlock()
-
-	return admin.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
-		query := `select * from book_inventories where lower(title) like lower('%` + title + `%')`
-		return tx.Set("gorm:query_option", "FOR UPDATE").Model(&model.BookInventory{}).Raw(query).Scan(&books).Error
-	})
-}
-
-func (admin *AdminRepository) SearchBookByAuthor(ctx *gin.Context, author string, books *[]model.BookInventory) error {
-	admin.mu.Lock()
-	defer admin.mu.Unlock()
-
-	return admin.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
-		query := `select * from book_inventories where lower(authors) like lower('%` + author + `%')`
-		return tx.Set("gorm:query_option", "FOR UPDATE").Model(&model.BookInventory{}).Raw(query).Scan(&books).Error
-	})
-}
-
-func (admin *AdminRepository) SearchBookByPublisher(ctx *gin.Context, publisher string, books *[]model.BookInventory) error {
-	admin.mu.Lock()
-	defer admin.mu.Unlock()
-
-	return admin.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
-		query := `select * from book_inventories where lower(publisher) like lower('%` + publisher + `%')`
-		return tx.Set("gorm:query_option", "FOR UPDATE").Model(&model.BookInventory{}).Raw(query).Scan(&books).Error
-	})
-}
-
-func (admin *AdminRepository) SearchBookByISBN(ctx *gin.Context, isbn string, book *model.BookInventory) error {
-	admin.mu.Lock()
-	defer admin.mu.Unlock()
-
-	return admin.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
-		return tx.Set("gorm:query_option", "FOR UPDATE").Model(&model.BookInventory{}).Where("isbn = ?", isbn).First(&book).Error
-	})
-}
-
-func (admin *AdminRepository) GetBooks(ctx *gin.Context, books *[]model.BookInventory) error {
-	admin.mu.Lock()
-	defer admin.mu.Unlock()
-
-	return admin.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
-		return tx.Model(&model.BookInventory{}).Find(&books).Error
 	})
 }

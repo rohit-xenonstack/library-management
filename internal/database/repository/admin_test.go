@@ -64,7 +64,7 @@ func (s *AdminRepositoryTestSuite) TestAddBook() {
 	// Test case 1: Successful book addition
 	s.mock.ExpectBegin()
 	s.mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "users"`)).
-		WithArgs("admin@test.com").
+		WithArgs("admin@test.com", 1).
 		WillReturnRows(sqlmock.NewRows([]string{"email", "role"}).
 			AddRow("admin@test.com", "admin"))
 
@@ -139,7 +139,7 @@ func (s *AdminRepositoryTestSuite) TestRejectIssueRequest() {
 }
 
 func (s *AdminRepositoryTestSuite) TestListIssueRequests() {
-	var requests []IssueRequestDetails
+	var requests []model.IssueRequestDetails
 
 	s.mock.ExpectBegin()
 

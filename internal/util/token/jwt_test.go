@@ -15,10 +15,10 @@ func TestJWToken(t *testing.T) {
 
 	userID := util.RandomUUID()
 	role := util.ReaderRole
-	duration := time.Minute
+	duration := 15 * time.Minute
 
 	issuedAt := time.Now()
-	expiredAt := issuedAt.Add(duration)
+	expires := issuedAt.Add(duration)
 
 	token, payload, err := jwtoken.CreateToken(userID, role, duration)
 	assert.NoError(t, err)
@@ -32,7 +32,7 @@ func TestJWToken(t *testing.T) {
 	assert.NotZero(t, payload.ID)
 	assert.Equal(t, role, payload.Role)
 	assert.WithinDuration(t, issuedAt, payload.IssuedAt, time.Second)
-	assert.WithinDuration(t, expiredAt, payload.Expires, time.Second)
+	assert.WithinDuration(t, expires, payload.Expires, time.Second)
 }
 
 func TestExpiredJWToken(t *testing.T) {
@@ -47,7 +47,7 @@ func TestExpiredJWToken(t *testing.T) {
 	payload, err = maker.VerifyToken(token)
 	assert.Error(t, err)
 	assert.EqualError(t, err, ErrExpiredToken.Error())
-	assert.Nil(t, payload)
+	assert.NotNil(t, payload)
 }
 
 func TestInvalidJWTokenAlgNone(t *testing.T) {
@@ -70,4 +70,15 @@ func TestInvalidJWTokenAlgNone(t *testing.T) {
 func TestInvalidSecretKeySize(t *testing.T) {
 	_, err := NewJWTMaker(util.RandomString(25))
 	assert.Error(t, err)
+}
+
+func TestInvalidPayload(t *testing.T) {
+	jwtoken, err := NewJWTMaker(util.RandomString(32))
+	assert.NoError(t, err)
+
+	token, payload, err := jwtoken.CreateToken("", "5", time.Minute)
+	assert.Error(t, err)
+	assert.EqualError(t, err, ErrInvalidToken.Error())
+	assert.Nil(t, token)
+	assert.Nil(t, payload)
 }

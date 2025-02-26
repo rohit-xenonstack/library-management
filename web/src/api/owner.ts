@@ -1,39 +1,24 @@
 import { api } from './config'
-import type { CreateLibraryData, OnboardAdminData } from '../lib/schema'
-
-export type ApiResponse = {
-  status: 'success' | 'error'
-  payload: string
-}
+import type { OnboardAdminData } from '../types/data'
+import { RequiredResponse } from '../types/response'
+import { CreateLibraryWithOwnerData } from '../types/data'
 
 export const createLibrary = async (
-  data: CreateLibraryData,
-): Promise<ApiResponse> => {
+  data: CreateLibraryWithOwnerData,
+): Promise<RequiredResponse> => {
   return api
-    .post(`protected/owner/create-library`, {
-      json: {
-        library_name: data.libraryName,
-        name: data.ownerName,
-        email: data.ownerEmail,
-        contact: data.ownerContact,
-      },
-      throwHttpErrors: false,
+    .post(`create-library`, {
+      json: data,
     })
-    .json<ApiResponse>()
+    .json<RequiredResponse>()
 }
 
 export const onboardAdmin = async (
   data: OnboardAdminData,
-): Promise<ApiResponse> => {
+): Promise<RequiredResponse> => {
   return api
     .post(`protected/owner/onboard-admin`, {
-      json: {
-        name: data.adminName,
-        email: data.adminEmail,
-        contact: data.adminContact,
-        library_id: data.libraryId,
-      },
-      throwHttpErrors: true,
+      json: data,
     })
-    .json<ApiResponse>()
+    .json<RequiredResponse>()
 }

@@ -1,30 +1,35 @@
-export interface UserDataResponse {
-  user_id: string
-  name: string
-  email: string
-  contact: string
-  role: string
-  library_id?: string
+import { BookData, IssueRequestData, UserData } from './data'
+
+export interface RequiredResponse {
+  status: 'success' | 'error'
+  message: string
 }
 
-interface LoginResponsePayload {
-  message: string
+export interface SignInResponse extends RequiredResponse {
   access_token?: string
-  user?: UserDataResponse
+  user?: UserData
 }
 
-export interface UserDetailsResponse {
-  status: 'success' | 'error'
-  message: string
-  payload?: UserDataResponse
+export interface UserDetailsResponse extends RequiredResponse {
+  user?: UserData
 }
 
-export interface SignInResponse {
-  status: 'success' | 'error'
-  payload: LoginResponsePayload
+export interface RefreshAccessTokenResponse extends RequiredResponse {
+  access_token?: string
 }
 
-export interface RegisterApiResponse {
-  status: 'success' | 'error'
-  payload: string
+export interface SearchBooksResponse extends RequiredResponse {
+  books?: BookData[]
+}
+
+export interface SearchBookByISBNResponse extends RequiredResponse {
+  book?: BookData
+}
+
+export interface IssueRequestResponse extends RequiredResponse {
+  requests?: IssueRequestData[]
+}
+
+export interface GetBooksResponse extends RequiredResponse {
+  books?: BookData[]
 }

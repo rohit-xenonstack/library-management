@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 import { useAuth } from '../hook/use-auth'
 import styles from '../styles/modules/navbar.module.scss'
-import type { FileRouteTypes } from '../route-tree.gen'
+import type { FileRouteTypes } from '../routeTree.gen'
 
 type NavigationItem = {
   to: FileRouteTypes['to']

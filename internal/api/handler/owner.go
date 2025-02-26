@@ -2,6 +2,7 @@ package handler
 
 import (
 	"library-management/backend/internal/api/model"
+	"library-management/backend/internal/api/schema"
 	"library-management/backend/internal/database/repository"
 	"library-management/backend/internal/util"
 	"net/http"
@@ -19,141 +20,133 @@ func NewOwnerHandler(owner *repository.OwnerRepository) *OwnerHandler {
 	}
 }
 
-type CreateLibraryRequest struct {
-	LibraryName   string `json:"library_name" binding:"required"`
-	Name          string `json:"name" binding:"required"`
-	Email         string `json:"email" binding:"required"`
-	ContactNumber string `json:"contact" binding:"required"`
-}
+func (owner *OwnerHandler) CreateLibraryWithOwner(ctx *gin.Context) {
+	var request schema.CreateLibraryRequest
+	response := schema.RequiredResponseFields{
+		Status:  "error",
+		Message: "",
+	}
 
-type CreateAdminRequest struct {
-	Name          string `json:"name" binding:"required"`
-	Email         string `json:"email" binding:"required"`
-	ContactNumber string `json:"contact" binding:"required"`
-	LibID         string `json:"library_id" binding:"required"`
-}
-
-type GetAdminsRequest struct {
-	LibID string `json:"library_id" binding:"required"`
-}
-
-func (owner *OwnerHandler) CreateLibrary(ctx *gin.Context) {
-	var createLibraryRequest CreateLibraryRequest
-
-	if err := ctx.ShouldBindJSON(&createLibraryRequest); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": "invalid request parameters",
-		})
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		response.Message = "invalid request parameters"
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
+
 	libID := util.RandomUUID()
 	ownerID := util.RandomUUID()
 
 	newLibrary := model.Library{
 		ID:   libID,
-		Name: createLibraryRequest.LibraryName,
+		Name: request.LibraryName,
 	}
 
 	newOwner := model.Users{
 		ID:            ownerID,
-		Name:          createLibraryRequest.Name,
-		Email:         createLibraryRequest.Email,
-		ContactNumber: createLibraryRequest.ContactNumber,
+		Name:          request.Name,
+		Email:         request.Email,
+		ContactNumber: request.ContactNumber,
 		Role:          util.OwnerRole,
 		LibID:         &libID,
 	}
 
 	err := owner.OwnerRepository.CreateLibraryWithUser(ctx, &newLibrary, &newOwner)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": err.Error(),
-		})
+		response.Message = err.Error()
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
 
-	responseMsg := "Library created successfuly"
-	ctx.JSON(http.StatusCreated, gin.H{
-		"status":  "success",
-		"payload": responseMsg,
-	})
+	response.Status = "success"
+	response.Message = "Library created successfuly"
+	ctx.JSON(http.StatusCreated, response)
 }
 
 func (owner *OwnerHandler) GetLibraries(ctx *gin.Context) {
 	libraries := make([]model.LibraryDetails, 0)
+	response := schema.GetLibrariesResponse{
+		RequiredResponseFields: schema.RequiredResponseFields{
+			Status:  "error",
+			Message: "",
+		},
+		Libraries: &libraries,
+	}
+
 	err := owner.OwnerRepository.GetLibraries(ctx, &libraries)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"payload": "Failed to fetch libraries",
-		})
+		response.Message = err.Error()
+		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"status":    "success",
-		"libraries": libraries,
-	})
+	response.Status = "success"
+	response.Message = "fetched libraries successfuly"
+	response.Libraries = &libraries
+
+	ctx.JSON(http.StatusOK, response)
 }
 
 func (owner *OwnerHandler) GetAdmins(ctx *gin.Context) {
-	var getAdminsRequest GetAdminsRequest
-	if err := ctx.ShouldBindJSON(&getAdminsRequest); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": "invalid request parameters",
-		})
-		return
-	}
-
 	admins := make([]model.Users, 0)
-	err := owner.OwnerRepository.GetAdmins(ctx, &admins, getAdminsRequest.LibID)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"payload": "Failed to fetch admins",
-		})
+	var request schema.GetAdminsRequest
+	response := schema.GetAdminsResponse{
+		RequiredResponseFields: schema.RequiredResponseFields{
+			Status:  "error",
+			Message: "",
+		},
+		Admins: &admins,
+	}
+
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		response.Message = "invalid request parameters"
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"status": "success",
-		"admins": admins,
-	})
+	err := owner.OwnerRepository.GetAdmins(ctx, &admins, request.LibID)
+	if err != nil {
+		response.Message = err.Error()
+		ctx.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	response.Status = "success"
+	response.Message = "fetched admins for current library successfuly"
+	response.Admins = &admins
+
+	ctx.JSON(http.StatusOK, response)
 }
 
 func (owner *OwnerHandler) CreateAdmin(ctx *gin.Context) {
-	var createAdminRequest CreateAdminRequest
-	if err := ctx.ShouldBindJSON(&createAdminRequest); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": "invalid request parameters",
-		})
+	var request schema.CreateAdminRequest
+	response := schema.RequiredResponseFields{
+		Status:  "error",
+		Message: "",
+	}
+
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		response.Message = err.Error()
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
 
 	newUser := model.Users{
 		ID:            util.RandomUUID(),
-		Name:          createAdminRequest.Name,
-		Email:         createAdminRequest.Email,
-		ContactNumber: createAdminRequest.ContactNumber,
+		Name:          request.Name,
+		Email:         request.Email,
+		ContactNumber: request.ContactNumber,
 		Role:          util.AdminRole,
-		LibID:         &createAdminRequest.LibID,
+		LibID:         &request.LibID,
 	}
 
 	err := owner.OwnerRepository.OnboardAdmin(ctx, &newUser)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": err.Error(),
-		})
+		response.Message = err.Error()
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
 
-	responseMsg := "New admin onboarded successfuly"
-	ctx.JSON(http.StatusCreated, gin.H{
-		"status":  "success",
-		"payload": responseMsg,
-	})
+	response.Status = "success"
+	response.Message = "new admin onboarded successfuly"
+	ctx.JSON(http.StatusCreated, response)
 }

@@ -11,6 +11,7 @@ type Repository struct {
 	OwnerRepository  *OwnerRepository
 	AdminRepository  *AdminRepository
 	ReaderRepository *ReaderRepository
+	SharedRepository *SharedRepository
 	txManager        *transaction.TxManager
 }
 
@@ -21,6 +22,7 @@ func NewRepository(db *gorm.DB) *Repository {
 		OwnerRepository:  NewOwnerRepository(db, txManager),
 		AdminRepository:  NewAdminRepository(db, txManager),
 		ReaderRepository: NewReaderRepository(db, txManager),
+		SharedRepository: NewSharedRepository(db, txManager),
 		txManager:        txManager,
 	}
 }

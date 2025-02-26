@@ -1,11 +1,10 @@
 package handler
 
 import (
-	"errors"
 	"library-management/backend/internal/api/model"
+	"library-management/backend/internal/api/schema"
 	"library-management/backend/internal/database/repository"
 	"library-management/backend/internal/util/token"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,311 +20,185 @@ func NewAdminHandler(admin *repository.AdminRepository) *AdminHandler {
 	}
 }
 
-type AddBookRequest struct {
-	AdminEmail string `json:"email" binding:"required"`
-	ISBN       string `json:"isbn" binding:"required"`
-	Title      string `json:"title" binding:"required"`
-	Authors    string `json:"authors" binding:"required"`
-	Publisher  string `json:"publisher" binding:"required"`
-	Version    string `json:"version" binding:"required"`
-}
-
-type RemoveBookRequest struct {
-	ISBN string `json:"isbn" binding:"required"`
-}
-
-type ListIssueRequestResponse struct {
-	Status  string                `json:"status"`
-	Payload []model.RequestEvents `json:"payload"`
-}
-
-type RequestDetails struct {
-	RequestID string `json:"request_id" binding:"required"`
-	AdminID   string `json:"user_id" binding:"required"`
-}
-
-type UpdateBookRequest struct {
-	ISBN      string `json:"isbn" binding:"required"`
-	Title     string `json:"title" binding:"required"`
-	Authors   string `json:"authors" binding:"required"`
-	Publisher string `json:"publisher" binding:"required"`
-	Version   string `json:"version" binding:"required"`
-}
-
-type GetBookByISBNResponse struct {
-	Status  string               `json:"status"`
-	Payload *model.BookInventory `json:"payload"`
-}
-
 func (admin *AdminHandler) AddBook(ctx *gin.Context) {
-	var addBookRequest AddBookRequest
+	var request schema.AddBookRequest
+	response := schema.RequiredResponseFields{
+		Status:  "error",
+		Message: "",
+	}
 
-	if err := ctx.ShouldBindJSON(&addBookRequest); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": "invalid request parameters",
-		})
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		response.Message = "invalid request parameters"
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
 
 	book := model.BookInventory{
-		ISBN:            addBookRequest.ISBN,
-		Title:           addBookRequest.Title,
-		Authors:         addBookRequest.Authors,
-		Publisher:       addBookRequest.Publisher,
-		Version:         addBookRequest.Version,
+		ISBN:            request.ISBN,
+		Title:           request.Title,
+		Authors:         request.Authors,
+		Publisher:       request.Publisher,
+		Version:         request.Version,
 		TotalCopies:     1,
 		AvailableCopies: 1,
 	}
-	err := admin.AdminRepository.AddBook(ctx, &book, addBookRequest.AdminEmail)
 
+	err := admin.AdminRepository.AddBook(ctx, &book, request.AdminEmail)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": err.Error(),
-		})
+		response.Message = err.Error()
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
 
-	responseMsg := "Book Added successfuly"
-	ctx.JSON(http.StatusCreated, gin.H{
-		"status":  "success",
-		"payload": responseMsg,
-	})
+	response.Status = "success"
+	response.Message = "Book Added successfuly"
+	ctx.JSON(http.StatusCreated, response)
 }
 
 func (admin *AdminHandler) RemoveBook(ctx *gin.Context) {
-	var removeBookRequest RemoveBookRequest
-
-	if err := ctx.ShouldBindJSON(&removeBookRequest); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": "invalid request parameters",
-		})
-		return
+	var request schema.RemoveBookRequest
+	response := schema.RequiredResponseFields{
+		Status:  "error",
+		Message: "",
 	}
 
-	err := admin.AdminRepository.RemoveBook(ctx, removeBookRequest.ISBN)
-
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": err.Error(),
-		})
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		response.Message = "invalid request parameters"
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
-
-	responseMsg := "Book removed successfuly"
-	ctx.JSON(http.StatusCreated, gin.H{
-		"status":  "success",
-		"payload": responseMsg,
-	})
-}
-
-func (admin *AdminHandler) UpdateBook(ctx *gin.Context) {
-	var updateBookRequest UpdateBookRequest
-
-	if err := ctx.ShouldBindJSON(&updateBookRequest); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": "invalid request parameters",
-		})
-		return
-	}
-
-	log.Print(updateBookRequest)
-	err := admin.AdminRepository.UpdateBook(ctx, updateBookRequest.ISBN, updateBookRequest.Title, updateBookRequest.Authors, updateBookRequest.Publisher, updateBookRequest.Version)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": err.Error(),
-		})
-		return
-	}
-
-	responseMsg := "Book updated successfuly"
-	ctx.JSON(http.StatusCreated, gin.H{
-		"status":  "success",
-		"payload": responseMsg,
-	})
-}
-
-func (admin *AdminHandler) ListIssueRequests(ctx *gin.Context) {
-	issueRequests := make([]repository.IssueRequestDetails, 0)
 
 	sessionPayload, ok := ctx.Get("session_payload")
 	if !ok {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": "session not found",
-		})
+		response.Message = "session not found in context"
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
-	log.Print(sessionPayload)
 	userID := sessionPayload.(*token.Payload).UserID
-	log.Print(userID)
-	err := admin.AdminRepository.ListIssueRequests(ctx, &issueRequests, userID)
 
+	err := admin.AdminRepository.RemoveBook(ctx, request.ISBN, userID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"payload": err.Error(),
-		})
+		response.Message = err.Error()
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"status":  "success",
-		"payload": issueRequests})
+	response.Status = "success"
+	response.Message = "Book removed successfuly"
+	ctx.JSON(http.StatusCreated, response)
+}
+
+func (admin *AdminHandler) UpdateBook(ctx *gin.Context) {
+	var request schema.UpdateBookRequest
+	response := schema.RequiredResponseFields{
+		Status:  "error",
+		Message: "",
+	}
+
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		response.Message = "invalid request parameters"
+		ctx.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	sessionPayload, ok := ctx.Get("session_payload")
+	if !ok {
+		response.Message = "session not found in context"
+		ctx.JSON(http.StatusBadRequest, response)
+		return
+	}
+	userID := sessionPayload.(*token.Payload).UserID
+
+	err := admin.AdminRepository.UpdateBook(ctx, request.ISBN, request.Title, request.Authors, request.Publisher, request.Version, userID)
+	if err != nil {
+		response.Message = err.Error()
+		ctx.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	response.Status = "success"
+	response.Message = "Book updated successfuly"
+	ctx.JSON(http.StatusCreated, response)
+}
+
+func (admin *AdminHandler) ListIssueRequests(ctx *gin.Context) {
+	issueRequests := make([]model.IssueRequestDetails, 0)
+	response := schema.ListIssueRequestResponse{
+		RequiredResponseFields: schema.RequiredResponseFields{
+			Status:  "error",
+			Message: "",
+		},
+		Requests: issueRequests,
+	}
+
+	sessionPayload, ok := ctx.Get("session_payload")
+	if !ok {
+		response.Message = "session not found in current context"
+		ctx.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	userID := sessionPayload.(*token.Payload).UserID
+
+	err := admin.AdminRepository.ListIssueRequests(ctx, &issueRequests, userID)
+	if err != nil {
+		response.Message = err.Error()
+		ctx.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	response.Status = "success"
+	response.Message = "retrieved issue requests successfuly"
+	response.Requests = issueRequests
+	ctx.JSON(http.StatusOK, response)
 }
 
 func (admin *AdminHandler) ApproveIssueRequest(ctx *gin.Context) {
-	var requestDetails RequestDetails
+	var request schema.RequestDetails
+	response := schema.RequiredResponseFields{
+		Status:  "error",
+		Message: "",
+	}
 
-	if err := ctx.ShouldBindJSON(&requestDetails); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": "invalid request parameters",
-		})
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		response.Message = "invalid request parameters"
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
 
-	err := admin.AdminRepository.ApproveIssueRequest(ctx, requestDetails.RequestID, requestDetails.AdminID)
-
+	err := admin.AdminRepository.ApproveIssueRequest(ctx, request.RequestID, request.AdminID)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": err.Error(),
-		})
+		response.Message = err.Error()
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
 
-	responseMsg := "Book issue request approved"
-	ctx.JSON(http.StatusCreated, gin.H{
-		"status":  "success",
-		"payload": responseMsg,
-	})
+	response.Status = "success"
+	response.Message = "book issue request approved"
+	ctx.JSON(http.StatusCreated, response)
 }
 
 func (admin *AdminHandler) RejectIssueRequest(ctx *gin.Context) {
-	var requestDetails RequestDetails
+	var request schema.RequestDetails
+	response := schema.RequiredResponseFields{
+		Status:  "error",
+		Message: "",
+	}
 
-	if err := ctx.ShouldBindJSON(&requestDetails); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": "invalid request parameters",
-		})
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		response.Message = "invalid request parameters"
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
 
-	err := admin.AdminRepository.RejectIssueRequest(ctx, requestDetails.RequestID)
-
+	err := admin.AdminRepository.RejectIssueRequest(ctx, request.RequestID)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": err.Error(),
-		})
+		response.Message = err.Error()
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
 
-	responseMsg := "Book issue Request rejected"
-	ctx.JSON(http.StatusCreated, gin.H{
-		"status":  "success",
-		"payload": responseMsg,
-	})
-}
-
-func (admin *AdminHandler) SearchBook(ctx *gin.Context) {
-	var searchBookRequest SearchBookRequest
-
-	if err := ctx.ShouldBindJSON(&searchBookRequest); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": "invalid request parameters",
-		})
-		return
-	}
-
-	books := make([]model.BookInventory, 0)
-	switch searchBookRequest.Field {
-	case "title":
-		err := admin.AdminRepository.SearchBookByTitle(ctx, searchBookRequest.SearchString, &books)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"status":  "error",
-				"payload": err.Error(),
-			})
-			return
-		}
-	case "authors":
-		err := admin.AdminRepository.SearchBookByAuthor(ctx, searchBookRequest.SearchString, &books)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"status":  "error",
-				"payload": err.Error(),
-			})
-			return
-		}
-	case "publisher":
-		err := admin.AdminRepository.SearchBookByPublisher(ctx, searchBookRequest.SearchString, &books)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"status":  "error",
-				"payload": err.Error(),
-			})
-			return
-		}
-	default:
-		err := errors.New("wrong field specified for book search")
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": err.Error(),
-		})
-		return
-	}
-
-	response := SearchBookResponse{
-		Status:  "success",
-		Payload: books,
-	}
+	response.Status = "success"
+	response.Message = "book issue request rejected"
 	ctx.JSON(http.StatusCreated, response)
-}
-
-func (admin *AdminHandler) SearchBookByISBN(ctx *gin.Context) {
-	var book model.BookInventory
-	isbn := ctx.Param("isbn")
-
-	err := admin.AdminRepository.SearchBookByISBN(ctx, isbn, &book)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": err.Error(),
-		})
-		return
-	}
-
-	response := GetBookByISBNResponse{
-		Status:  "success",
-		Payload: &book,
-	}
-	ctx.JSON(http.StatusCreated, response)
-}
-
-func (admin *AdminHandler) GetBooks(ctx *gin.Context) {
-	books := make([]model.BookInventory, 0)
-	err := admin.AdminRepository.GetBooks(ctx, &books)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"message": err.Error(),
-			"payload": nil,
-		})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{
-		"status":  "success",
-		"message": "Books fetched successfully",
-		"payload": books,
-	})
 }

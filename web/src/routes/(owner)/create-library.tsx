@@ -5,9 +5,11 @@ import type { FormEvent } from 'react'
 
 import { createLibrary } from '../../api/owner'
 import { fallback } from '../../lib/constants'
-import { createLibrarySchema } from '../../lib/schema'
 import styles from '../../styles/form.module.scss'
-import type { CreateLibraryData } from '../../lib/schema'
+import {
+  CreateLibraryWithOwnerData,
+  createLibraryWithOwnerSchema,
+} from '../../types/data'
 
 export const Route = createFileRoute('/(owner)/create-library')({
   validateSearch: z.object({
@@ -30,13 +32,13 @@ export const Route = createFileRoute('/(owner)/create-library')({
 
 function CreateLibrary() {
   const [isLoading, setIsLoading] = useState(false)
-  const [formData, setFormData] = useState<CreateLibraryData>({
-    libraryName: '',
-    ownerName: '',
-    ownerEmail: '',
-    ownerContact: '',
+  const [formData, setFormData] = useState<CreateLibraryWithOwnerData>({
+    library_name: '',
+    name: '',
+    email: '',
+    contact: '',
   })
-  const [errors, setErrors] = useState<Partial<CreateLibraryData>>({})
+  const [errors, setErrors] = useState<Partial<CreateLibraryWithOwnerData>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [formSuccess, setFormSuccess] = useState<string | null>(null)
   const navigate = useNavigate()
@@ -48,11 +50,11 @@ function CreateLibrary() {
     setFormError(null)
 
     try {
-      const result = createLibrarySchema.safeParse(formData)
+      const result = createLibraryWithOwnerSchema.safeParse(formData)
       if (!result.success) {
-        const fieldErrors: Partial<CreateLibraryData> = {}
+        const fieldErrors: Partial<CreateLibraryWithOwnerData> = {}
         for (const issue of result.error.issues) {
-          const path = issue.path[0] as keyof CreateLibraryData
+          const path = issue.path[0] as keyof CreateLibraryWithOwnerData
           fieldErrors[path] = issue.message
         }
         setErrors(fieldErrors)
@@ -63,16 +65,16 @@ function CreateLibrary() {
       if (response.status === 'success') {
         setFormSuccess('Library created successfully')
         setFormData({
-          libraryName: '',
-          ownerName: '',
-          ownerEmail: '',
-          ownerContact: '',
+          library_name: '',
+          name: '',
+          email: '',
+          contact: '',
         })
         setTimeout(() => {
           navigate({ to: '/' })
         }, 2000)
       } else {
-        setFormError(response.payload || 'Failed to create library')
+        setFormError('Failed: ' + response.message)
       }
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'An error occurred')
@@ -84,7 +86,10 @@ function CreateLibrary() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
 
-    setFormData((prev: CreateLibraryData) => ({ ...prev, [name]: value }))
+    setFormData((prev: CreateLibraryWithOwnerData) => ({
+      ...prev,
+      [name]: value,
+    }))
   }
 
   return (
@@ -98,16 +103,16 @@ function CreateLibrary() {
             </label>
             <input
               id='library_name'
-              name='libraryName'
+              name='library_name'
               type='text'
               className={styles.input}
-              value={formData.libraryName}
+              value={formData.library_name}
               onChange={handleChange}
               disabled={isLoading}
               required
             />
-            {errors.libraryName && (
-              <div className={styles.error}>{errors.libraryName}</div>
+            {errors.library_name && (
+              <div className={styles.error}>{errors.library_name}</div>
             )}
           </div>
 
@@ -117,17 +122,15 @@ function CreateLibrary() {
             </label>
             <input
               id='name'
-              name='ownerName'
+              name='name'
               type='text'
               className={styles.input}
-              value={formData.ownerName}
+              value={formData.name}
               onChange={handleChange}
               disabled={isLoading}
               required
             />
-            {errors.ownerName && (
-              <div className={styles.error}>{errors.ownerName}</div>
-            )}
+            {errors.name && <div className={styles.error}>{errors.name}</div>}
           </div>
 
           <div className={styles.formGroup}>
@@ -136,17 +139,15 @@ function CreateLibrary() {
             </label>
             <input
               id='email'
-              name='ownerEmail'
+              name='email'
               type='email'
               className={styles.input}
-              value={formData.ownerEmail}
+              value={formData.email}
               onChange={handleChange}
               disabled={isLoading}
               required
             />
-            {errors.ownerEmail && (
-              <div className={styles.error}>{errors.ownerEmail}</div>
-            )}
+            {errors.email && <div className={styles.error}>{errors.email}</div>}
           </div>
 
           <div className={styles.formGroup}>
@@ -155,16 +156,16 @@ function CreateLibrary() {
             </label>
             <input
               id='contact'
-              name='ownerContact'
+              name='contact'
               type='tel'
               className={styles.input}
-              value={formData.ownerContact}
+              value={formData.contact}
               onChange={handleChange}
               disabled={isLoading}
               required
             />
-            {errors.ownerContact && (
-              <div className={styles.error}>{errors.ownerContact}</div>
+            {errors.contact && (
+              <div className={styles.error}>{errors.contact}</div>
             )}
           </div>
 

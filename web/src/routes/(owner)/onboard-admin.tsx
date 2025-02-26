@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { onboardAdmin } from '../../api/owner'
 import { useAuth } from '../../hook/use-auth'
 import { fallback } from '../../lib/constants'
-import { onboardAdminSchema } from '../../lib/schema'
+import { onboardAdminSchema } from '../../types/data'
 import styles from '../../styles/form.module.scss'
 
 export const Route = createFileRoute('/(owner)/onboard-admin')({
@@ -30,9 +30,9 @@ export const Route = createFileRoute('/(owner)/onboard-admin')({
 function OnboardAdmin() {
   const { user } = useAuth()
   const [formData, setFormData] = useState({
-    adminName: '',
-    adminEmail: '',
-    adminContact: '',
+    name: '',
+    email: '',
+    contact: '',
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -48,7 +48,7 @@ function OnboardAdmin() {
     try {
       const validatedData = onboardAdminSchema.parse({
         ...formData,
-        libraryId: user?.library_id as string,
+        library_id: user?.library_id as string,
       })
 
       const response = await onboardAdmin(validatedData)
@@ -56,15 +56,15 @@ function OnboardAdmin() {
       if (response.status === 'success') {
         setSuccess('Admin onboarded successfully!')
         setFormData({
-          adminName: '',
-          adminEmail: '',
-          adminContact: '',
+          name: '',
+          email: '',
+          contact: '',
         })
         setTimeout(() => {
           navigate({ to: '/' })
         }, 2000)
       } else {
-        setError(response.payload || 'Failed to onboard admin')
+        setError('Failed: ' + response.message)
       }
     } catch (err) {
       setError('Something went wrong: ' + err)
@@ -87,14 +87,14 @@ function OnboardAdmin() {
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.formGroup}>
-            <label htmlFor='adminName' className={styles.label}>
+            <label htmlFor='name' className={styles.label}>
               Admin Name
             </label>
             <input
               type='text'
-              id='adminName'
-              name='adminName'
-              value={formData.adminName}
+              id='name'
+              name='name'
+              value={formData.name}
               onChange={handleChange}
               className={styles.input}
               required
@@ -102,14 +102,14 @@ function OnboardAdmin() {
           </div>
 
           <div className={styles.formGroup}>
-            <label htmlFor='adminEmail' className={styles.label}>
+            <label htmlFor='email' className={styles.label}>
               Admin Email
             </label>
             <input
               type='email'
-              id='adminEmail'
-              name='adminEmail'
-              value={formData.adminEmail}
+              id='email'
+              name='email'
+              value={formData.email}
               onChange={handleChange}
               className={styles.input}
               required
@@ -117,14 +117,14 @@ function OnboardAdmin() {
           </div>
 
           <div className={styles.formGroup}>
-            <label htmlFor='adminContact' className={styles.label}>
+            <label htmlFor='contact' className={styles.label}>
               Contact Number
             </label>
             <input
               type='tel'
-              id='adminContact'
-              name='adminContact'
-              value={formData.adminContact}
+              id='contact'
+              name='contact'
+              value={formData.contact}
               onChange={handleChange}
               className={styles.input}
               required

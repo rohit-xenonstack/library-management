@@ -56,21 +56,26 @@ func (api *API) SetupRouter() {
 			ctx.JSON(http.StatusOK, gin.H{"message": "pong"})
 		})
 
+		baseRoute.POST("/create-library", api.Handler.OwnerHandler.CreateLibraryWithOwner)
 		authRoutes := baseRoute.Group("/auth")
 		{
 			authRoutes.POST("/login", api.Handler.AuthHandler.Login)
-			authRoutes.POST("/register", api.Handler.AuthHandler.UserSignup)
-			authRoutes.GET("/refresh", api.Handler.AuthHandler.RefreshToken)
+			authRoutes.POST("/register", api.Handler.AuthHandler.ReaderSignup)
+			authRoutes.GET("/refresh", api.Handler.AuthHandler.RefreshAccessToken)
+
 		}
 
 		protectedRoutes := baseRoute.Group("/protected")
 		protectedRoutes.Use(middleware.JWTAuth())
 		{
+			protectedRoutes.POST("/book", api.Handler.SharedHandler.SearchBook)
+			protectedRoutes.GET("/book/:isbn", api.Handler.SharedHandler.SearchBookByISBN)
+			protectedRoutes.GET("/books", api.Handler.SharedHandler.GetBooks)
+
 			protectedRoutes.GET("/me", api.Handler.AuthHandler.UserDetails)
 			ownerRoutes := protectedRoutes.Group("/owner")
 			ownerRoutes.Use(middleware.RequirePrivilege(util.OwnerRole))
 			{
-				ownerRoutes.POST("/create-library", api.Handler.OwnerHandler.CreateLibrary)
 				ownerRoutes.POST("/onboard-admin", api.Handler.OwnerHandler.CreateAdmin)
 				ownerRoutes.GET("/libraries", api.Handler.OwnerHandler.GetLibraries)
 				ownerRoutes.POST("/admins", api.Handler.OwnerHandler.GetAdmins)
@@ -84,9 +89,6 @@ func (api *API) SetupRouter() {
 				adminRoutes.GET("/issue-requests", api.Handler.AdminHandler.ListIssueRequests)
 				adminRoutes.POST("/approve-issue-request", api.Handler.AdminHandler.ApproveIssueRequest)
 				adminRoutes.POST("/reject-issue-request", api.Handler.AdminHandler.RejectIssueRequest)
-				adminRoutes.POST("/books", api.Handler.AdminHandler.SearchBook)
-				adminRoutes.GET("/books/:isbn", api.Handler.AdminHandler.SearchBookByISBN)
-				adminRoutes.GET("/list-books", api.Handler.AdminHandler.GetBooks)
 
 			}
 			readerRoutes := protectedRoutes.Group("/reader")

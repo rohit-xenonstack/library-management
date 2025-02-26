@@ -4,10 +4,10 @@ import (
 	"errors"
 	"library-management/backend/internal/api/middleware"
 	"library-management/backend/internal/api/model"
+	"library-management/backend/internal/api/schema"
 	"library-management/backend/internal/database/repository"
 	"library-management/backend/internal/util"
 	"library-management/backend/internal/util/token"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -16,44 +16,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
-
-type LoginRequest struct {
-	Email string `json:"email" binding:"required"`
-}
-
-// Update the UserSignupRequest struct to implement custom unmarshalling
-type UserSignupRequest struct {
-	Name    string `json:"name" binding:"required"`
-	Email   string `json:"email" binding:"required"`
-	Contact string `json:"contact" binding:"required"`
-	LibID   string `json:"library_id" binding:"required"`
-}
-
-type UserSignupResponse struct {
-	Status  string `json:"status" binding:"required"`
-	Payload string `json:"payload" binding:"required"`
-}
-
-type LoginPayload struct {
-	Message     string       `json:"message" binding:"required"`
-	AccessToken *string      `json:"access_token,omitempty"`
-	User        *model.Users `json:"user,omitempty"`
-}
-
-type LoginResponse struct {
-	Status  string       `json:"status" binding:"required"`
-	Payload LoginPayload `json:"payload" binding:"required"`
-}
-
-type RefreshPayload struct {
-	AccessToken *string `json:"access_token,omitempty"`
-	Message     string  `json:"message" binding:"required"`
-}
-
-type RefreshTokenResponse struct {
-	Status  string         `json:"status"`
-	Payload RefreshPayload `json:"payload" binding:"required"`
-}
 
 type AuthHandler struct {
 	AuthRepository *repository.AuthRepository
@@ -66,192 +28,191 @@ func NewAuthHandler(auth *repository.AuthRepository) *AuthHandler {
 }
 
 func (auth *AuthHandler) Login(ctx *gin.Context) {
-	var loginRequest LoginRequest
-	var loginResponse LoginResponse
+	var loginRequest schema.LoginRequest
+	loginResponse := schema.LoginResponse{
+		RequiredResponseFields: schema.RequiredResponseFields{
+			Status:  "error",
+			Message: "",
+		},
+		AccessToken: nil,
+		User:        nil,
+	}
 
 	if err := ctx.ShouldBindJSON(&loginRequest); err != nil {
-		loginResponse.Status = "error"
-		loginResponse.Payload.Message = "invalid request parameters"
+		loginResponse.Message = "invalid request parameters"
 		ctx.JSON(http.StatusBadRequest, loginResponse)
 		return
 	}
 
-	user, err := auth.AuthRepository.Login(ctx, loginRequest.Email)
+	var user model.Users
+	err := auth.AuthRepository.Login(ctx, loginRequest.Email, &user)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			loginResponse.Status = "error"
-			loginResponse.Payload.Message = "user not found with given email"
+			loginResponse.Message = "user not found with given email"
 			ctx.JSON(http.StatusNotFound, loginResponse)
 			return
 		}
-		loginResponse.Status = "error"
-		loginResponse.Payload.Message = "internal server error"
+		loginResponse.Message = "internal server error"
 		ctx.JSON(http.StatusInternalServerError, loginResponse)
 		return
 	}
 
 	jwtoken, err := token.NewJWTMaker(os.Getenv("JWT_SECRET_KEY"))
 	if err != nil {
-		loginResponse.Status = "error"
-		loginResponse.Payload.Message = err.Error()
+		loginResponse.Message = err.Error()
 		ctx.JSON(http.StatusInternalServerError, loginResponse)
 		return
 	}
 
 	duration, err := time.ParseDuration(os.Getenv("ACCESS_TOKEN_DURATION"))
 	if err != nil {
-		loginResponse.Status = "error"
-		loginResponse.Payload.Message = err.Error()
+		loginResponse.Message = err.Error()
 		ctx.JSON(http.StatusInternalServerError, loginResponse)
 		return
 	}
 
 	accessToken, _, err := jwtoken.CreateToken(user.ID, user.Role, duration)
 	if err != nil {
-		loginResponse.Status = "error"
-		loginResponse.Payload.Message = err.Error()
+		loginResponse.Message = err.Error()
 		ctx.JSON(http.StatusInternalServerError, loginResponse)
 		return
 	}
 
-	response := LoginResponse{
-		Status: "success",
-		Payload: LoginPayload{
-			AccessToken: &accessToken,
-			User:        user,
-		},
-	}
-
-	ctx.JSON(http.StatusOK, response)
+	loginResponse.Status = "success"
+	loginResponse.Message = "login successful"
+	loginResponse.AccessToken = &accessToken
+	loginResponse.User = &user
+	ctx.JSON(http.StatusOK, loginResponse)
 }
 
 func (auth *AuthHandler) UserDetails(ctx *gin.Context) {
+	var user model.Users
+	response := schema.UserDetailsResponse{
+		RequiredResponseFields: schema.RequiredResponseFields{
+			Status:  "error",
+			Message: "",
+		},
+		User: &user,
+	}
+
 	session, exists := ctx.Get(middleware.AuthorizationPayloadKey)
-	sessionPayload := session.(*token.Payload)
 	if !exists {
-		err := "session not found in current context"
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"message": err,
-			"payload": nil,
-		})
+		response.Message = "session not found in current context"
+		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
-	user, err := auth.AuthRepository.UserDetails(ctx, sessionPayload.UserID)
+
+	sessionPayload := session.(*token.Payload)
+	err := auth.AuthRepository.UserDetails(ctx, sessionPayload.UserID, &user)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"message": err.Error(),
-			"payload": nil,
-		})
+		response.Message = "internal server error"
+		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{
-		"status":  "success",
-		"message": "user details fetched successfully",
-		"payload": user,
-	})
+
+	response.Status = "success"
+	response.Message = "user details fetched successfully"
+	response.User = &user
+	ctx.JSON(http.StatusOK, response)
 }
 
-func (auth *AuthHandler) UserSignup(ctx *gin.Context) {
-	var userSignupRequest UserSignupRequest
-
-	if err := ctx.ShouldBindJSON(&userSignupRequest); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": err.Error()})
+func (auth *AuthHandler) ReaderSignup(ctx *gin.Context) {
+	var request schema.ReaderSignupRequest
+	response := schema.ReaderSignupResponse{
+		RequiredResponseFields: schema.RequiredResponseFields{
+			Status:  "error",
+			Message: "",
+		},
+	}
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		response.Message = "invalid request parameters"
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
 
 	newUser := model.Users{
 		ID:            util.RandomUUID(),
-		Name:          userSignupRequest.Name,
-		Email:         userSignupRequest.Email,
-		ContactNumber: userSignupRequest.Contact,
+		Name:          request.Name,
+		Email:         request.Email,
+		ContactNumber: request.Contact,
 		Role:          util.ReaderRole,
-		LibID:         &userSignupRequest.LibID,
+		LibID:         &request.LibID,
 	}
 
 	err := auth.AuthRepository.UserSignup(ctx, newUser)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"payload": err.Error()})
+		response.Message = err.Error()
+		ctx.JSON(http.StatusBadRequest, response)
 		return
 	}
 
-	response := UserSignupResponse{
-		Status:  "success",
-		Payload: "User Signup Successful",
-	}
+	response.Status = "success"
+	response.Message = "user signed up successfully"
 	ctx.JSON(http.StatusOK, response)
 }
 
-func (auth *AuthHandler) RefreshToken(ctx *gin.Context) {
-	response := RefreshTokenResponse{
-		Status: "error",
-		Payload: RefreshPayload{
-			Message:     "internal server error",
-			AccessToken: nil,
+func (auth *AuthHandler) RefreshAccessToken(ctx *gin.Context) {
+	response := schema.RefreshAccessTokenResponse{
+		RequiredResponseFields: schema.RequiredResponseFields{
+			Status:  "error",
+			Message: "",
 		},
+		AccessToken: nil,
 	}
 
 	authorizationHeader := ctx.GetHeader("Authorization")
-	log.Print(authorizationHeader)
 	if len(authorizationHeader) == 0 {
-		response.Payload.Message = "authorization header not provided"
+		response.Message = "authorization header not provided"
 		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
 	fields := strings.Fields(authorizationHeader)
 	if len(fields) < 2 {
-		response.Payload.Message = "invalid authorization header format"
+		response.Message = "invalid authorization header format"
 		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
 	authorizationType := strings.ToLower(fields[0])
 	if authorizationType != "bearer" {
-		response.Payload.Message = `unsupported authorization type, only "bearer" supported`
+		response.Message = `unsupported authorization type, only "bearer" supported`
 		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
 	accessToken := fields[1]
-	log.Print(accessToken)
 
 	tokenMaker, err := token.NewJWTMaker(os.Getenv("JWT_SECRET_KEY"))
 	if err != nil {
-		response.Payload.Message = err.Error()
+		response.Message = err.Error()
 		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
 	payload, err := tokenMaker.VerifyToken(accessToken)
 	if err != nil && !errors.Is(err, token.ErrExpiredToken) {
-		response.Payload.Message = err.Error()
+		response.Message = err.Error()
 		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
 	duration, err := time.ParseDuration(os.Getenv("ACCESS_TOKEN_DURATION"))
 	if err != nil {
-		response.Payload.Message = err.Error()
+		response.Message = err.Error()
 		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
-	log.Print("payload", payload)
 	newAccessToken, _, err := tokenMaker.CreateToken(payload.UserID, payload.Role, duration)
 	if err != nil {
-		response.Payload.Message = err.Error()
+		response.Message = err.Error()
 		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
 	response.Status = "success"
-	response.Payload.Message = "token refreshed successfully"
-	response.Payload.AccessToken = &newAccessToken
+	response.Message = "token refreshed successfully"
+	response.AccessToken = &newAccessToken
 	ctx.JSON(http.StatusOK, response)
 }

@@ -67,7 +67,7 @@ function AddBook() {
           navigate({ to: '/' })
         }, 2000)
       } else {
-        setError('Failed: ' + response.payload)
+        setError('Failed: ' + response.message)
       }
     } catch (err) {
       console.error(err)

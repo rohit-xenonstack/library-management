@@ -1,8 +1,7 @@
 import { createRouter } from '@tanstack/react-router'
 
-import { routeTree } from '../route-tree.gen'
+import { routeTree } from '../routeTree.gen'
 import type { AuthContextType } from '../context/auth-context'
-
 
 type RouterContext = {
   auth: AuthContextType
@@ -10,7 +9,7 @@ type RouterContext = {
 
 const router = createRouter({
   routeTree,
-  defaultPreload: "intent",
+  defaultPreload: 'intent',
   defaultPreloadStaleTime: 0,
   scrollRestoration: true,
   context: {

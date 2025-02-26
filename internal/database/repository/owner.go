@@ -72,6 +72,11 @@ func (owner *OwnerRepository) OnboardAdmin(ctx *gin.Context, user *model.Users) 
 		result := tx.Set("gorm:query_option", "FOR UPDATE").
 			Where("email = ?", user.Email).
 			First(&existingUser)
+
+		if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return result.Error
+		}
+
 		if result.RowsAffected > 0 {
 			return errors.New("user with supplied email already exists")
 		}
@@ -80,6 +85,10 @@ func (owner *OwnerRepository) OnboardAdmin(ctx *gin.Context, user *model.Users) 
 		result = tx.Set("gorm:query_option", "FOR UPDATE").
 			Where("id = ?", user.LibID).
 			First(&existingLibrary)
+
+		if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return result.Error
+		}
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return errors.New("no library found with given ID")
 		}
@@ -93,21 +102,16 @@ func (owner *OwnerRepository) GetLibraries(ctx *gin.Context, libraryDetails *[]m
 	defer owner.mu.Unlock()
 
 	return owner.txManager.ExecuteInTx(ctx, func(tx *gorm.DB) error {
-		query := `
-            SELECT
-								l.*,
-								u.name as owner_name,
-								u.email as owner_email,
-								COALESCE(b.total_books, 0) as total_books
-						FROM libraries l
-						LEFT JOIN users u ON l.id = u.lib_id
-						LEFT JOIN (
+		query := `SELECT l.*, u.name as owner_name, u.email as owner_email, COALESCE(b.total_books, 0) as total_books
+							FROM libraries l 
+							LEFT JOIN users u ON l.id = u.lib_id
+							LEFT JOIN ( 
 								SELECT lib_id, COUNT(*) as total_books
 								FROM book_inventories
 								GROUP BY lib_id
-						) b ON b.lib_id = l.id
-						WHERE u.role = 'owner'
-        `
+							) b ON b.lib_id = l.id
+							WHERE u.role = 'owner'
+							`
 
 		return tx.Raw(query).Scan(libraryDetails).Error
 	})
